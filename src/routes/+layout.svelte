@@ -23,7 +23,7 @@
       const now = Date.now();
       if (now - last_toast_time < TOAST_THROTTLE_MS) return;
       last_toast_time = now;
-      toast.error("Something went wrong");
+      toast.error(detail || "Something went wrong");
     }
 
     const on_error = (event: ErrorEvent) => {
