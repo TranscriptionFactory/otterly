@@ -293,6 +293,40 @@ describe("register_vault_actions", () => {
     expect(execute_open_dashboard).not.toHaveBeenCalled();
   });
 
+  it("leaves the editor empty when a vault opens without restored tabs", async () => {
+    const { registry, stores, services } = create_vault_actions_harness();
+
+    services.tab.load_tabs = vi.fn().mockResolvedValue({
+      tabs: [],
+      active_tab_path: null,
+    });
+    services.vault.change_vault_by_id = vi.fn().mockImplementation(() => {
+      stores.vault.set_vault({
+        id: as_vault_id("vault-next"),
+        name: "Next",
+        path: as_vault_path("/vault/next"),
+        created_at: 0,
+        mode: "vault",
+      });
+
+      return {
+        status: "opened",
+        editor_settings: {
+          ...stores.ui.editor_settings,
+          show_vault_dashboard_on_open: false,
+        },
+        root_total_count: 0,
+        opened_from_vault_switch: true,
+      };
+    });
+
+    await registry.execute(ACTION_IDS.vault_select, as_vault_id("vault-next"));
+
+    expect(services.note.create_new_note).not.toHaveBeenCalled();
+    expect(stores.editor.open_note).toBeNull();
+    expect(stores.tab.tabs).toEqual([]);
+  });
+
   describe("vault_sync_index", () => {
     it("calls sync_index on the vault service", async () => {
       const { registry, stores, services } = create_vault_actions_harness();
