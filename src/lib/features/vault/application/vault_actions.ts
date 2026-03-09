@@ -43,21 +43,6 @@ async function apply_opened_vault(
   }
 
   await input.registry.execute(ACTION_IDS.split_view_restore);
-
-  const will_show_dashboard =
-    input.stores.vault.is_vault_mode &&
-    editor_settings.show_vault_dashboard_on_open;
-
-  if (input.stores.tab.tabs.length === 0 && !will_show_dashboard) {
-    input.services.note.create_new_note([]);
-    const open_note = input.stores.editor.open_note;
-    if (open_note) {
-      input.stores.tab.open_tab(
-        open_note.meta.path,
-        open_note.meta.title || "Untitled",
-      );
-    }
-  }
 }
 
 export function register_vault_actions(input: ActionRegistrationInput) {
