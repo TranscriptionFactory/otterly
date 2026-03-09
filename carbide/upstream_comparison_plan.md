@@ -30,6 +30,108 @@ Per `docs/architecture.md`, the fixes should follow the existing layering rules 
 
 That matters here because most of the regressions are not caused by broken architecture. They are caused by composition granularity and cache ownership. The plan should therefore improve feature boundaries, loading strategy, and state shape without introducing cross-layer shortcuts.
 
+## Review Findings To Incorporate
+
+This plan is directionally correct, but there are a few gaps that should be treated as first-class design constraints during implementation.
+
+### 1. Document caching needs a stable metadata layer, not only viewer-state slimming
+
+The current Phase 2 direction correctly treats heavy document payloads as cache material rather than durable store state.
+
+That said, Carbide's future plugin system and metadata-provider work need a stable metadata surface for files that is not coupled to whether full document content is resident in memory.
+
+Implication:
+
+- do not reduce `DocumentStore` to only transient viewer mechanics and then rediscover metadata needs later
+- define document metadata ownership explicitly during the cache refactor
+- distinguish durable metadata from evictable payload content up front
+
+Practical requirement:
+
+- keep durable file/document metadata available independently of content eviction
+- ensure future APIs such as metadata providers or `metadata.getFileCache(path)` do not depend on keeping full file payloads resident
+
+### 2. Startup optimization should create reusable optional-surface boundaries, not three one-off lazy wrappers
+
+Phase 1 correctly prioritizes lazy-loading terminal, document viewer, and source editor.
+
+However, Carbide's future direction also includes runtime-extensible commands, status bar items, sidebar panels, and other plugin contribution points. If Phase 1 only introduces bespoke lazy wrappers for the current heavy components, the app will likely have to reopen the same composition-root work later when plugin-hosted UI arrives.
+
+Implication:
+
+- treat this as a general optional-surface loading problem, not only a terminal/document/source problem
+- reserve host patterns that can support both built-in optional features and future plugin-provided surfaces
+
+Practical requirement:
+
+- keep parent shells small and synchronous
+- make optional UI surfaces load through explicit boundaries that can later be reused by plugin-hosted panels and contributions
+- avoid reintroducing startup bloat when the plugin system adds dynamic UI
+
+#### Alternatives considered
+
+There are a few viable alternatives, but they are weaker overall for Carbide's combination of performance, modularity, and future extensibility:
+
+- static composition of all optional surfaces at startup
+- per-feature ad hoc lazy wrappers with no shared host pattern
+- route-level lazy loading only
+- conditional rendering without module-level lazy loading
+- runtime registries without explicit lazy UI boundaries
+
+Why these are weaker:
+
+- static composition is simplest, but keeps baseline startup cost too high
+- ad hoc lazy wrappers help startup, but fragment loading/error/teardown behavior
+- route-level splitting is insufficient for a workspace app with many optional surfaces inside one screen
+- visibility-only gating reduces mounted work but not baseline bundle/parse cost
+- registries alone help extensibility but do not guarantee optional code stays off the default path
+
+#### Recommended direction
+
+The preferred design is a small reusable optional-surface host pattern.
+
+This should not become a large framework. It only needs to provide a consistent boundary for:
+
+- when an optional surface is mounted
+- when its module is loaded
+- how loading and error states are handled
+- how teardown is performed when the surface is no longer needed
+
+This is the best balance for Carbide because it improves:
+
+- efficiency by keeping optional code off the default startup path
+- modularity by giving built-in optional features a shared loading contract
+- extensibility by giving future plugin-provided panels and other optional UI the same composition mechanism
+
+### 3. Split view needs an explicit capability/profile contract before more editor features land
+
+Phase 3 correctly identifies that the secondary pane should not pay the full editor cost by default.
+
+The risk is that Carbide still has more editor features planned, and the plugin roadmap expects richer editor-mediated contributions over time. Without an explicit contract for what the light profile includes, excludes, or defers, new editor features will drift into split view by default and erase the intended performance win.
+
+Implication:
+
+- "light profile" cannot remain an informal implementation detail
+- every editor-adjacent feature should declare whether it is available in light mode, promoted-on-focus only, or disabled for large-note fallback
+
+Practical requirement:
+
+- define a split-view capability matrix up front
+- make new editor features and future plugin-mediated editor contributions integrate against that profile policy
+- prevent accidental regressions where the secondary pane silently becomes "full editor all the time" again
+
+### 4. Phase 0 needs quantitative gates, not only qualitative goals
+
+The plan describes this as a staged performance program with measurement gates after each phase. That is the right framing.
+
+The acceptance targets should therefore be concrete enough to determine whether a phase actually succeeded. The comparison document already provides a realistic optimization band for emitted client output, so the implementation plan should use explicit numbers rather than only phrases like "reduce materially."
+
+Practical requirement:
+
+- define quantitative bundle targets where possible
+- define a measurable startup-surface target for optional dependencies
+- use concrete before/after thresholds for the highest-cost regressions rather than qualitative language alone
+
 ## Performance Themes
 
 The comparison points to five main problem areas:
@@ -381,6 +483,61 @@ To keep the work disciplined, this plan should not expand into:
 - an Obsidian-compatibility layer
 - broad architecture rewrites
 - speculative workerization of every expensive path before measuring the simpler lazy-loading fixes
+
+## Follow-Up Revisions For Existing Roadmap Docs
+
+The performance plan now adds cross-cutting constraints that should also be reflected in the broader Carbide roadmap docs.
+
+### `carbide/TODO.md`
+
+The following sections should be updated so the task tracker reflects the new performance and architecture constraints:
+
+- `Phase 0: Audit & Bootstrap`
+  - add performance-baseline and measurement-gate tasks
+  - track reproducible bundle/runtime measurement work explicitly instead of leaving it implicit
+- `Phase 4: Document Split View`
+  - add tasks for a secondary-pane light profile
+  - add tasks for focus promotion to full profile
+  - add tasks for large-note fallback behavior
+  - add tests for profile transitions and split-view cost controls
+- `Phase 6: Terminal Panel`
+  - add follow-up tasks for lazy-loading and optional-surface isolation
+  - add validation tasks for bundle impact after terminal isolation
+- `Phase 6e: Editor Feature Ports`
+  - add an explicit requirement that new editor features declare split-view profile behavior
+  - prevent future editor work from silently bypassing the split-view performance contract
+- `Phase 7: In-App Document Viewer`
+  - add tasks for splitting durable metadata from evictable content payloads
+  - add tasks for lazy PDF text extraction
+  - add tasks for document-content eviction policy and activation reload behavior
+  - add tests for metadata/cache separation and demand-driven loading
+- `Phase 8: Plugin System`
+  - add prerequisite tasks or notes for dynamic contribution registries
+  - add prerequisite tasks or notes for reusable optional-surface hosting
+  - add prerequisite tasks or notes for stable metadata APIs that do not depend on full document content staying resident
+
+### `carbide/carbide-project-guide.md`
+
+The following sections should be updated so the product/architecture guide stays aligned with the performance plan:
+
+- `What We Build New`
+  - add the cross-cutting rule that optional features must be optional at load time, not only optional in UI
+- `Document Split View`
+  - clarify that split view should support a reduced-cost secondary pane profile rather than assuming two always-equivalent full editors
+- `Terminal Panel`
+  - note that terminal integration should live behind a reusable lazy boundary so terminal dependencies stay off the default startup path
+- `In-App Document Viewer`
+  - add demand-driven PDF search/extraction expectations
+  - add metadata-versus-payload separation expectations
+  - add cache/eviction-policy expectations for non-markdown documents
+- `Plugin System`
+  - note that plugin UI should reuse the same optional-surface host/boundary model as built-in optional panels
+  - note that plugin metadata APIs require a stable metadata layer independent of document payload residency
+- `What I Need Right Now / Step 2`
+  - include the performance architecture work explicitly as a design constraint
+  - mention reusable optional-surface boundaries, document metadata ownership, and split-view profile policy
+- `Development Timeline`
+  - add a cross-cutting performance-hardening step or note that startup-surface and demand-driven-loading work run alongside terminal, document-viewer, and plugin phases
 
 ## Bottom Line
 
