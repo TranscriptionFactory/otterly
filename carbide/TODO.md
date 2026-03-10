@@ -143,23 +143,24 @@
 
 ### Backend (Rust)
 
-- [ ] `git_get_remotes`, `git_get_remote_url`, `git_add_remote` commands
-- [ ] `git_push(vault_path, remote?)` — push with auth
-- [ ] `git_pull(vault_path, remote?)` — fetch + merge
-- [ ] `git_fetch(vault_path, remote?)` — fetch without merge
-- [ ] `git_ahead_behind(vault_path)` — count ahead/behind vs upstream
-- [ ] SSH auth: detect `~/.ssh` keys, support ssh-agent via `git2` SSH transport
-- [ ] HTTPS: credential helper callback
-- [ ] Human-readable error categorization (auth failure, network, conflicts, diverged)
+- [x] `git_add_remote`, `git_push`, `git_pull`, `git_fetch`, `git_push_with_upstream`
+- [x] Ahead/behind counts plus remote metadata via `git_status`
+- [x] CLI-backed auth flow that uses the user's existing Git/SSH configuration
+- [x] Human-readable error categorization for auth, network, and pull conflict cases
 
 ### Frontend
 
-- [ ] Add Push/Pull buttons to `git_status_widget.svelte`
-- [ ] Show ahead/behind counts in git status bar
-- [ ] Sync progress indicator during push/pull
-- [ ] Error toasts with actionable messages
-- [ ] "Add Remote" dialog when no remote configured
-- [ ] Remote management in settings or git panel
+- [x] Add Push/Pull/Fetch controls to `git_status_widget.svelte`
+- [x] Show ahead/behind counts in git status bar
+- [x] Sync/fetch progress indicators during remote ops
+- [x] Error toasts with actionable messages
+- [x] "Add Remote" dialog when no remote configured
+- [ ] Full remote management in settings or a dedicated git panel
+
+### Version history
+
+- [x] Paginated version-history open path with 20-commit initial load
+- [x] Load-more flow plus note-scoped history cache with mutation invalidation
 
 ### Auto-commit
 
@@ -168,13 +169,14 @@
 
 ### Commands
 
-- [ ] Add to `COMMANDS_REGISTRY`: "Git Push", "Git Pull", "Git Fetch", "Add Remote"
+- [x] Add to `COMMANDS_REGISTRY`: "Git Push", "Git Pull", "Git Fetch", "Add Remote"
+- [x] Add default hotkeys for remote push/pull/fetch/add-remote
 
 ### Testing
 
-- [ ] Unit tests for error categorization
-- [ ] Unit tests for URL validation
-- [ ] Integration test for ahead/behind counting
+- [x] Unit tests for add-remote / fetch actions
+- [x] Unit tests for version-history pagination and cache behavior
+- [ ] Integration test for ahead/behind counting against a real remote
 - [ ] Test push/pull with SSH remote
 - [ ] Test auto-commit on save / interval
 

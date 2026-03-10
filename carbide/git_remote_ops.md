@@ -37,14 +37,17 @@ Added `has_remote: bool`, `has_upstream: bool`, `remote_url: Option<String>` —
 
 ### TypeScript frontend (full port/adapter stack)
 
-| Layer   | File                            | Changes                                                                                       |
-| ------- | ------------------------------- | --------------------------------------------------------------------------------------------- |
-| Types   | `types/git.ts`                  | Added `GitRemoteResult`, extended `GitStatus` with `has_remote`, `has_upstream`, `remote_url` |
-| Port    | `ports.ts`                      | 5 new methods: `push`, `fetch`, `pull`, `add_remote`, `push_with_upstream`                    |
-| Adapter | `adapters/git_tauri_adapter.ts` | IPC implementations for all 5 commands                                                        |
-| Service | `application/git_service.ts`    | `push()`, `pull()`, `fetch_remote()`, `add_remote(url)`, `sync()`                             |
-| Store   | `state/git_store.svelte.ts`     | 3 new state fields, updated `set_status()` and `reset()`                                      |
-| Barrel  | `index.ts`                      | Exports `GitRemoteResult`                                                                     |
+| Layer   | File                               | Changes                                                                                       |
+| ------- | ---------------------------------- | --------------------------------------------------------------------------------------------- |
+| Types   | `types/git.ts`                     | Added `GitRemoteResult`, extended `GitStatus` with `has_remote`, `has_upstream`, `remote_url` |
+| Port    | `ports.ts`                         | 5 new methods: `push`, `fetch`, `pull`, `add_remote`, `push_with_upstream`                    |
+| Adapter | `adapters/git_tauri_adapter.ts`    | IPC implementations for all 5 commands                                                        |
+| Service | `application/git_service.ts`       | `push()`, `pull()`, `fetch_remote()`, `add_remote(url)`, `sync()`, history paging/cache       |
+| Store   | `state/git_store.svelte.ts`        | Remote metadata, history pagination state, and note-scoped history cache                      |
+| UI      | `ui/git_status_widget.svelte`      | Push / fetch / pull controls, ahead-behind badges, add-remote CTA                             |
+| UI      | `ui/add_remote_dialog.svelte`      | Remote URL dialog wired through `UIStore` + action registry                                   |
+| UI      | `ui/version_history_dialog.svelte` | Initial loading state, incremental loading state, and `Load more`                             |
+| Barrel  | `index.ts`                         | Exports `GitRemoteResult` and add-remote dialog                                               |
 
 **Service behavior:**
 
@@ -53,21 +56,24 @@ Added `has_remote: bool`, `has_upstream: bool`, `remote_url: Option<String>` —
 - `fetch_remote()` — lightweight, no sync_status change
 - `add_remote(url)` — validates and adds origin
 - `sync()` — convenience: commit dirty changes + pull + push
+- history open path now loads 20 commits first, caches by note path, and paginates forward with `Load more`
+- history cache invalidates after local commits, restores, and pulls
 
 ### Tests updated
 
 - `tests/adapters/test_git_adapter.ts` — added 5 new port method stubs
-- `tests/unit/services/git_service.test.ts` — added mock port methods
-- `tests/unit/stores/git_store.test.ts` — updated `set_status()` call sites
-- `tests/unit/actions/register_git_actions.test.ts` — updated `set_status()` call sites
+- `tests/unit/services/git_service.test.ts` — added remote-op and history cache / pagination coverage
+- `tests/unit/stores/git_store.test.ts` — added history cache / pagination metadata coverage
+- `tests/unit/actions/register_git_actions.test.ts` — added add-remote dialog and fetch action coverage
+- `tests/unit/actions/register_omnibar_actions.test.ts` — added git command-palette mapping coverage
+- `tests/unit/domain/default_hotkeys.test.ts` — asserts remote-op default hotkeys exist
 
-## What's left (not in scope)
+## What's left (not in scope for this pass)
 
-- **UI for remote operations** — no push/pull/sync buttons or remote setup dialog yet
-- **Action registry entries** — `git_push`, `git_pull`, `git_sync` actions not registered
-- **Hotkeys** — no default bindings for remote ops
 - **Periodic fetch** — no background polling for upstream changes
+- **Full remote management UI** — only add-origin is exposed; editing/removing remotes still needs a settings/panel story
+- **Auto-commit settings** — interval / policy configuration still pending
 
 ## Commit
 
-`65001fe` on `fix/browse-mode-switch-freeze`
+Pending local commit on `feat/carbide_git_features`
