@@ -78,6 +78,10 @@ Redesign Otterly's AI integration so it feels like one assistant rather than thr
   - generated output is shown inline instead of replacing the entire dialog state
   - scope is now an explicit assistant control with `Selection` and `Full Note`
   - re-running the assistant after a result now behaves like a draft refinement pass
+- Added in-session assistant history as the bridge to a fuller conversational assistant:
+  - each run is now recorded as a session turn with provider, scope, prompt, and result
+  - repeated runs now read as one evolving interaction instead of unrelated one-shot edits
+  - the latest draft still remains explicit and apply-gated
 - Additional validation after the Phase 2 slice:
   - `pnpm check` ✅
   - `pnpm lint` ✅
