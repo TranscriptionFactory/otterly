@@ -133,3 +133,37 @@ Redesign Otterly's AI integration so it feels like one assistant rather than thr
 - Consider a structured edit proposal contract once the panel UX is settled
 - Consider preserving hunk selections across panel hide/show cycles if users need longer review sessions
 - Consider showing a small “Auto-selected backend” hint the first time the assistant opens in auto mode
+
+## Putative next steps
+
+### Recommended next slice
+
+1. Add a structured edit proposal contract for AI edit mode
+   - keep freeform conversational replies for non-edit turns
+   - require edit turns to return a machine-validated payload
+   - prefer a small structured format over raw full-text replacement
+2. Validate structured proposals before enabling apply
+   - reject malformed payloads early
+   - surface parse/validation errors in the assistant instead of failing silently
+   - keep the explicit user apply boundary unchanged
+3. Preserve partial-apply review quality
+   - ensure structured proposals still map cleanly to diff hunks
+   - keep partial apply available after proposal parsing
+4. Add a lightweight auto-selection hint
+   - show when `Auto` picked Claude, Codex, or Ollama
+   - keep this informational, not blocking
+
+### Concrete resume checklist
+
+- Review `src/lib/features/ai/application/ai_actions.ts`
+- Review `src/lib/features/ai/application/ai_service.ts`
+- Review `src/lib/features/ai/domain/ai_prompt_builder.ts`
+- Review `src/lib/features/ai/domain/ai_diff.ts`
+- Review `src/lib/features/ai/ui/ai_assistant_content.svelte`
+- Add a new domain module for structured proposal parsing/validation
+- Add unit tests before wiring apply behavior
+
+### Validation notes for next pickup
+
+- `pnpm lint` was blocked by unrelated pre-existing working tree changes outside the AI slice
+- AI-specific work through commit `77c32ca` is documented and validated aside from that unrelated lint blocker
