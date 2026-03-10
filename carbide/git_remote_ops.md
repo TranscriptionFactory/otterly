@@ -76,4 +76,4 @@ Added `has_remote: bool`, `has_upstream: bool`, `remote_url: Option<String>` —
 
 ## Commit
 
-Pending local commit on `feat/carbide_git_features`
+`b91947a` on `feat/carbide_git_features`
