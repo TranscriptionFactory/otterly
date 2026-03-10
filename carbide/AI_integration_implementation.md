@@ -73,6 +73,17 @@ Redesign Otterly's AI integration so it feels like one assistant rather than thr
   - `pnpm test` ✅
   - `cargo check` ✅
   - `pnpm format` ✅
+- Continued Phase 2 with a more stable assistant surface:
+  - the prompt/composer now stays visible after generating a draft
+  - generated output is shown inline instead of replacing the entire dialog state
+  - scope is now an explicit assistant control with `Selection` and `Full Note`
+  - re-running the assistant after a result now behaves like a draft refinement pass
+- Additional validation after the Phase 2 slice:
+  - `pnpm check` ✅
+  - `pnpm lint` ✅
+  - `pnpm test` ✅
+  - `cargo check` ✅
+  - `pnpm format` ✅
 
 ## Open follow-ups
 
