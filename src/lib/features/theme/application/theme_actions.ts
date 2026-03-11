@@ -10,7 +10,7 @@ import {
 export function register_theme_actions(input: ActionRegistrationInput) {
   const { registry, stores, services } = input;
 
-  let persisted_theme_snapshot: Theme | null = null;
+  let persisted_user_themes_snapshot: Theme[] | null = null;
   let persisted_active_theme_id: string | null = null;
 
   async function persist_themes() {
@@ -18,18 +18,38 @@ export function register_theme_actions(input: ActionRegistrationInput) {
     await services.theme.save_active_theme_id(stores.ui.active_theme_id);
   }
 
-  async function set_themes_and_active_id(
-    themes: Theme[],
-    active_theme_id: string,
-  ) {
+  function clone_theme(theme: Theme): Theme {
+    return {
+      ...theme,
+      token_overrides: { ...theme.token_overrides },
+    };
+  }
+
+  function clone_themes(themes: Theme[]): Theme[] {
+    return themes.map(clone_theme);
+  }
+
+  function set_themes_and_active_id(themes: Theme[], active_theme_id: string) {
     stores.ui.set_user_themes(themes);
     stores.ui.set_active_theme_id(active_theme_id);
-    await persist_themes();
-    persisted_theme_snapshot = null;
+  }
+
+  function capture_draft_snapshot() {
+    if (persisted_user_themes_snapshot === null) {
+      persisted_user_themes_snapshot = clone_themes(stores.ui.user_themes);
+    }
+    if (persisted_active_theme_id === null) {
+      persisted_active_theme_id = stores.ui.active_theme_id;
+    }
+  }
+
+  function mark_theme_draft() {
+    capture_draft_snapshot();
+    stores.ui.theme_has_draft = true;
   }
 
   function reset_theme_draft_state() {
-    persisted_theme_snapshot = null;
+    persisted_user_themes_snapshot = null;
     persisted_active_theme_id = null;
     stores.ui.theme_has_draft = false;
   }
@@ -45,6 +65,7 @@ export function register_theme_actions(input: ActionRegistrationInput) {
       const result = await services.theme.load_themes();
       stores.ui.set_user_themes(result.user_themes);
       stores.ui.set_active_theme_id(result.active_theme_id);
+      reset_theme_draft_state();
     },
   });
 
@@ -53,38 +74,38 @@ export function register_theme_actions(input: ActionRegistrationInput) {
     label: "Switch Theme",
     execute: (theme_id: unknown) => {
       if (typeof theme_id !== "string") return;
-      if (!persisted_active_theme_id) {
-        persisted_active_theme_id = stores.ui.active_theme_id;
-      }
+      if (theme_id === stores.ui.active_theme_id) return;
+      mark_theme_draft();
       stores.ui.set_active_theme_id(theme_id);
-      stores.ui.theme_has_draft = true;
     },
   });
 
   registry.register({
     id: ACTION_IDS.theme_create,
     label: "Create Theme",
-    execute: async (args: unknown) => {
+    execute: (args: unknown) => {
       const { name, base } = args as { name: string; base: Theme };
+      mark_theme_draft();
       const new_theme = services.theme.duplicate_theme(name, base);
       const updated = [...stores.ui.user_themes, new_theme];
-      await set_themes_and_active_id(updated, new_theme.id);
+      set_themes_and_active_id(updated, new_theme.id);
     },
   });
 
   registry.register({
     id: ACTION_IDS.theme_duplicate,
     label: "Duplicate Theme",
-    execute: async (theme_id: unknown) => {
+    execute: (theme_id: unknown) => {
       if (typeof theme_id !== "string") return;
       const source = find_theme(theme_id);
       if (!source) return;
+      mark_theme_draft();
       const new_theme = services.theme.duplicate_theme(
         `${source.name} (copy)`,
         source,
       );
       const updated = [...stores.ui.user_themes, new_theme];
-      await set_themes_and_active_id(updated, new_theme.id);
+      set_themes_and_active_id(updated, new_theme.id);
     },
   });
 
@@ -93,6 +114,7 @@ export function register_theme_actions(input: ActionRegistrationInput) {
     label: "Rename Theme",
     execute: (args: unknown) => {
       const { id, name } = args as { id: string; name: string };
+      mark_theme_draft();
       const updated = stores.ui.user_themes.map((t) =>
         t.id === id ? { ...t, name } : t,
       );
@@ -103,16 +125,15 @@ export function register_theme_actions(input: ActionRegistrationInput) {
   registry.register({
     id: ACTION_IDS.theme_delete,
     label: "Delete Theme",
-    execute: async (theme_id: unknown) => {
+    execute: (theme_id: unknown) => {
       if (typeof theme_id !== "string") return;
       if (BUILTIN_THEMES.some((t) => t.id === theme_id)) return;
+      mark_theme_draft();
       const updated = stores.ui.user_themes.filter((t) => t.id !== theme_id);
       stores.ui.set_user_themes(updated);
       if (stores.ui.active_theme_id === theme_id) {
         stores.ui.set_active_theme_id(DEFAULT_THEME_ID);
       }
-      await persist_themes();
-      persisted_theme_snapshot = null;
     },
   });
 
@@ -122,15 +143,11 @@ export function register_theme_actions(input: ActionRegistrationInput) {
     execute: (args: unknown) => {
       const theme = args as Theme;
       if (theme.is_builtin) return;
-      if (!persisted_theme_snapshot) {
-        const current = stores.ui.user_themes.find((t) => t.id === theme.id);
-        if (current) persisted_theme_snapshot = { ...current };
-      }
+      mark_theme_draft();
       const updated = stores.ui.user_themes.map((t) =>
         t.id === theme.id ? theme : t,
       );
       stores.ui.set_user_themes(updated);
-      stores.ui.theme_has_draft = true;
     },
   });
 
@@ -147,15 +164,10 @@ export function register_theme_actions(input: ActionRegistrationInput) {
     id: ACTION_IDS.theme_revert,
     label: "Revert Theme Changes",
     execute: () => {
-      if (persisted_theme_snapshot) {
-        const snapshot = persisted_theme_snapshot;
-        const updated = stores.ui.user_themes.map((t) =>
-          t.id === snapshot.id ? snapshot : t,
-        );
-        stores.ui.set_user_themes(updated);
-        persisted_theme_snapshot = null;
+      if (persisted_user_themes_snapshot !== null) {
+        stores.ui.set_user_themes(clone_themes(persisted_user_themes_snapshot));
       }
-      if (persisted_active_theme_id) {
+      if (persisted_active_theme_id !== null) {
         stores.ui.set_active_theme_id(persisted_active_theme_id);
       }
       reset_theme_draft_state();
