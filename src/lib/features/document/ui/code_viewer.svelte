@@ -3,8 +3,12 @@
   import { Copy, Check } from "@lucide/svelte";
   import type { EditorView } from "@codemirror/view";
 
+  import { use_app_context } from "$lib/app/context/app_context.svelte";
+
   interface Props {
-    content: string;
+    content: string | null;
+    buffer_id?: string | null;
+    line_count?: number | null;
     file_type?: string;
     filename?: string;
     wrap_lines?: boolean;
@@ -12,19 +16,31 @@
 
   let {
     content,
+    buffer_id = null,
+    line_count = null,
     file_type = "text",
     filename = "",
     wrap_lines = true,
   }: Props = $props();
 
+  const { ports } = use_app_context();
   let container: HTMLDivElement | undefined = $state();
   let view: EditorView | undefined;
   let copied = $state(false);
   let copy_timer: ReturnType<typeof setTimeout> | undefined;
 
+  async function get_full_content(): Promise<string> {
+    if (content !== null) return content;
+    if (buffer_id && line_count !== null) {
+      return await ports.document.read_buffer_window(buffer_id, 0, line_count);
+    }
+    return "";
+  }
+
   async function copy_content() {
     try {
-      await navigator.clipboard.writeText(content);
+      const full_content = await get_full_content();
+      await navigator.clipboard.writeText(full_content);
       copied = true;
       clearTimeout(copy_timer);
       copy_timer = setTimeout(() => {
@@ -35,69 +51,89 @@
     }
   }
 
+  async function load_initial_content(): Promise<string> {
+    if (content !== null) return content;
+    if (buffer_id && line_count !== null) {
+      // Load first 5000 lines for instant preview
+      // If file is larger, we might want a "Load more" button or true virtualization
+      const initial_limit = 5000;
+      const end = Math.min(line_count, initial_limit);
+      let text = await ports.document.read_buffer_window(buffer_id, 0, end);
+      if (line_count > initial_limit) {
+        text += `\n\n--- FILE TRUNCATED (${line_count} lines total). Virtualized viewing not fully implemented. ---`;
+      }
+      return text;
+    }
+    return "";
+  }
+
   onMount(() => {
     let destroyed = false;
 
     const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-    Promise.all([
-      import("codemirror"),
-      import("@codemirror/state"),
-      import("@codemirror/language"),
-      import("@codemirror/language-data"),
-      dark ? import("@codemirror/theme-one-dark") : Promise.resolve(null),
-    ]).then(
-      async ([
+    const init = async () => {
+      const [
         { EditorView, basicSetup },
         { EditorState },
         { LanguageDescription },
         { languages },
         dark_theme,
-      ]) => {
-        if (destroyed || !container) return;
+        initial_text,
+      ] = await Promise.all([
+        import("codemirror"),
+        import("@codemirror/state"),
+        import("@codemirror/language"),
+        import("@codemirror/language-data"),
+        dark ? import("@codemirror/theme-one-dark") : Promise.resolve(null),
+        load_initial_content(),
+      ]);
 
-        const extensions = [
-          basicSetup,
-          EditorState.readOnly.of(true),
-          EditorView.theme({
-            "&": { height: "100%", fontSize: "var(--text-sm, 13px)" },
-            ".cm-scroller": {
-              overflow: "auto",
-              fontFamily: "var(--font-mono, monospace)",
-            },
-          }),
-        ];
+      if (destroyed || !container) return;
 
-        if (wrap_lines) {
-          extensions.push(EditorView.lineWrapping);
+      const extensions = [
+        basicSetup,
+        EditorState.readOnly.of(true),
+        EditorView.theme({
+          "&": { height: "100%", fontSize: "var(--text-sm, 13px)" },
+          ".cm-scroller": {
+            overflow: "auto",
+            fontFamily: "var(--font-mono, monospace)",
+          },
+        }),
+      ];
+
+      if (wrap_lines) {
+        extensions.push(EditorView.lineWrapping);
+      }
+
+      if (dark_theme) {
+        extensions.push(dark_theme.oneDark);
+      }
+
+      const target =
+        filename || (file_type === "code" ? "file.ts" : "file.txt");
+      const lang_desc = LanguageDescription.matchFilename(languages, target);
+
+      if (lang_desc) {
+        try {
+          const lang_support = await lang_desc.load();
+          if (!destroyed) extensions.push(lang_support);
+        } catch {
+          // language load failed, proceed without highlighting
         }
+      }
 
-        if (dark_theme) {
-          extensions.push(dark_theme.oneDark);
-        }
+      if (destroyed || !container) return;
 
-        const target =
-          filename || (file_type === "code" ? "file.ts" : "file.txt");
-        const lang_desc = LanguageDescription.matchFilename(languages, target);
+      view = new EditorView({
+        doc: initial_text,
+        extensions,
+        parent: container,
+      });
+    };
 
-        if (lang_desc) {
-          try {
-            const lang_support = await lang_desc.load();
-            if (!destroyed) extensions.push(lang_support);
-          } catch {
-            // language load failed, proceed without highlighting
-          }
-        }
-
-        if (destroyed || !container) return;
-
-        view = new EditorView({
-          doc: content,
-          extensions,
-          parent: container,
-        });
-      },
-    );
+    init();
 
     return () => {
       destroyed = true;
@@ -108,12 +144,15 @@
 
   $effect(() => {
     if (!view) return;
-    const current = view.state.doc.toString();
-    if (current !== content) {
-      view.dispatch({
-        changes: { from: 0, to: current.length, insert: content },
-      });
-    }
+    load_initial_content().then((text) => {
+      if (!view) return;
+      const current = view.state.doc.toString();
+      if (current !== text) {
+        view.dispatch({
+          changes: { from: 0, to: current.length, insert: text },
+        });
+      }
+    });
   });
 </script>
 

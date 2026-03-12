@@ -10,5 +10,22 @@ export function create_document_tauri_adapter(): DocumentPort {
     resolve_asset_url(vault_id: string, relative_path: string): string {
       return otterly_asset_url(vault_id, relative_path);
     },
+    async open_buffer(
+      id: string,
+      vault_id: string,
+      relative_path: string,
+    ): Promise<number> {
+      return invoke<number>("open_buffer", { id, vault_id, relative_path });
+    },
+    async read_buffer_window(
+      id: string,
+      start_line: number,
+      end_line: number,
+    ): Promise<string> {
+      return invoke<string>("read_buffer_window", { id, start_line, end_line });
+    },
+    async close_buffer(id: string): Promise<void> {
+      return invoke("close_buffer", { id });
+    },
   };
 }

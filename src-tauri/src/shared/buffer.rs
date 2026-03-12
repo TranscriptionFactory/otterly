@@ -1,0 +1,98 @@
+use ropey::Rope;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use tauri::State;
+use crate::shared::storage;
+
+pub struct ManagedBuffer {
+    pub rope: Rope,
+    pub path: String,
+}
+
+pub struct BufferManager {
+    pub buffers: Mutex<HashMap<String, Arc<ManagedBuffer>>>,
+}
+
+impl BufferManager {
+    pub fn new() -> Self {
+        Self {
+            buffers: Mutex::new(HashMap::new()),
+        }
+    }
+
+    pub fn open_buffer(&self, app: &tauri::AppHandle, id: String, vault_id: String, relative_path: String) -> Result<usize, String> {
+        let root = storage::vault_path(app, &vault_id)?;
+        let abs = crate::features::notes::service::safe_vault_abs(&root, &relative_path)?;
+        
+        let content = crate::shared::io_utils::read_file_to_string(&abs)?;
+        let rope = Rope::from_str(&content);
+        let line_count = rope.len_lines();
+        
+        let mut buffers = self.buffers.lock().unwrap();
+        buffers.insert(
+            id,
+            Arc::new(ManagedBuffer {
+                rope,
+                path: abs.to_string_lossy().to_string(),
+            }),
+        );
+        Ok(line_count)
+    }
+
+    pub fn get_buffer(&self, id: &str) -> Option<Arc<ManagedBuffer>> {
+        let buffers = self.buffers.lock().unwrap();
+        buffers.get(id).cloned()
+    }
+
+    pub fn close_buffer(&self, id: &str) {
+        let mut buffers = self.buffers.lock().unwrap();
+        buffers.remove(id);
+    }
+}
+
+#[tauri::command]
+pub fn open_buffer(
+    app: tauri::AppHandle,
+    id: String,
+    vault_id: String,
+    relative_path: String,
+    manager: State<'_, BufferManager>,
+) -> Result<usize, String> {
+    manager.open_buffer(&app, id, vault_id, relative_path)
+}
+
+#[tauri::command]
+pub fn read_buffer_window(
+    id: String,
+    start_line: usize,
+    end_line: usize,
+    manager: State<'_, BufferManager>,
+) -> Result<String, String> {
+    let buffer = manager.get_buffer(&id).ok_or("Buffer not found")?;
+    let rope = &buffer.rope;
+
+    let line_count = rope.len_lines();
+    if start_line >= line_count {
+        return Ok(String::new());
+    }
+
+    let end_line = end_line.min(line_count);
+    if start_line >= end_line {
+        return Ok(String::new());
+    }
+
+    let start_char = rope.line_to_char(start_line);
+    let end_char = if end_line == line_count {
+        rope.len_chars()
+    } else {
+        rope.line_to_char(end_line)
+    };
+
+    Ok(rope.slice(start_char..end_char).to_string())
+}
+
+#[tauri::command]
+pub fn close_buffer(id: String, manager: State<'_, BufferManager>) -> Result<(), String> {
+    manager.close_buffer(&id);
+    Ok(())
+}

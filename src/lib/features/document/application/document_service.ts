@@ -74,6 +74,8 @@ export class DocumentService {
       status: "loading",
       error_message: null,
       content: null,
+      buffer_id: null,
+      line_count: null,
       asset_url: null,
       last_accessed_at: this.now_ms(),
     };
@@ -82,23 +84,32 @@ export class DocumentService {
     this.document_store.set_load_status(tab_id, "loading");
 
     try {
-      const next_state = needs_text_content(viewer_state.file_type)
-        ? {
-            ...loading_state,
-            status: "ready" as const,
-            content: await this.document_port.read_file(
-              vault_id,
-              viewer_state.file_path,
-            ),
-          }
-        : {
-            ...loading_state,
-            status: "ready" as const,
-            asset_url: this.document_port.resolve_asset_url(
-              vault_id,
-              viewer_state.file_path,
-            ),
-          };
+      let next_state: DocumentContentState;
+
+      if (needs_text_content(viewer_state.file_type)) {
+        // Use buffer for text/code
+        const buffer_id = `buf_${tab_id}`;
+        const line_count = await this.document_port.open_buffer(
+          buffer_id,
+          vault_id,
+          viewer_state.file_path,
+        );
+        next_state = {
+          ...loading_state,
+          status: "ready",
+          buffer_id,
+          line_count,
+        };
+      } else {
+        next_state = {
+          ...loading_state,
+          status: "ready",
+          asset_url: this.document_port.resolve_asset_url(
+            vault_id,
+            viewer_state.file_path,
+          ),
+        };
+      }
 
       this.document_store.set_content_state(tab_id, {
         ...next_state,
@@ -118,6 +129,10 @@ export class DocumentService {
   }
 
   close_document(tab_id: string): void {
+    const existing = this.document_store.get_content_state(tab_id);
+    if (existing?.buffer_id) {
+      this.document_port.close_buffer(existing.buffer_id).catch(() => {});
+    }
     this.document_store.clear_content_state(tab_id);
     this.document_store.remove_viewer_state(tab_id);
   }
@@ -131,6 +146,10 @@ export class DocumentService {
 
     for (const tab_id of [...this.document_store.content_states.keys()]) {
       if (!open_ids.has(tab_id)) {
+        const existing = this.document_store.get_content_state(tab_id);
+        if (existing?.buffer_id) {
+          this.document_port.close_buffer(existing.buffer_id).catch(() => {});
+        }
         this.document_store.clear_content_state(tab_id);
       }
     }
@@ -156,6 +175,9 @@ export class DocumentService {
     );
 
     for (const entry of entries_to_evict) {
+      if (entry.buffer_id) {
+        this.document_port.close_buffer(entry.buffer_id).catch(() => {});
+      }
       this.document_store.clear_content_state(entry.tab_id);
       this.document_store.set_load_status(entry.tab_id, "idle");
     }

@@ -18,6 +18,8 @@
   const { stores } = use_app_context();
   const asset_url = $derived(content_state?.asset_url ?? null);
   const content = $derived(content_state?.content ?? null);
+  const buffer_id = $derived(content_state?.buffer_id ?? null);
+  const line_count = $derived(content_state?.line_count ?? null);
 </script>
 
 <div class="DocumentViewer">
@@ -36,9 +38,11 @@
     />
   {:else if viewer_state.file_type === "csv" && content !== null}
     <CsvViewer {content} />
-  {:else if (viewer_state.file_type === "code" || viewer_state.file_type === "text") && content !== null}
+  {:else if (viewer_state.file_type === "code" || viewer_state.file_type === "text") && (content !== null || buffer_id !== null)}
     <CodeViewer
       {content}
+      {buffer_id}
+      {line_count}
       file_type={viewer_state.file_type}
       filename={viewer_state.file_path.split("/").pop() ?? ""}
       wrap_lines={stores.ui.editor_settings.document_code_wrap}

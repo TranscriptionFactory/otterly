@@ -1,4 +1,5 @@
 use crate::shared::constants;
+use crate::shared::io_utils;
 use crate::shared::storage;
 use crate::shared::vault_ignore;
 use serde::{Deserialize, Serialize};
@@ -294,38 +295,14 @@ pub fn read_note(app: AppHandle, vault_id: String, note_id: String) -> Result<No
     log::debug!("Reading note vault_id={} note_id={}", vault_id, note_id);
     let root = storage::vault_path(&app, &vault_id)?;
     let abs = safe_vault_abs(&root, &note_id)?;
-    let markdown = std::fs::read_to_string(&abs).map_err(|e| {
+    let markdown = io_utils::read_file_to_string(&abs).map_err(|e| {
         log::error!("Failed to read note {}: {}", note_id, e);
-        e.to_string()
+        e
     })?;
     Ok(NoteDoc {
         meta: build_note_meta(&root, &note_id)?,
         markdown,
     })
-}
-
-fn atomic_write(path: &Path, content: &str) -> Result<(), String> {
-    let dir = path.parent().ok_or("invalid note path")?;
-    std::fs::create_dir_all(dir).map_err(|e| {
-        log::error!("Failed to create directory {}: {}", dir.display(), e);
-        e.to_string()
-    })?;
-    let name = format!("{}.tmp", storage::now_ms());
-    let tmp = dir.join(name);
-    std::fs::write(&tmp, content.as_bytes()).map_err(|e| {
-        log::error!("Failed to write temp file {}: {}", tmp.display(), e);
-        e.to_string()
-    })?;
-    std::fs::rename(&tmp, path).map_err(|e| {
-        log::error!(
-            "Failed to rename {} -> {}: {}",
-            tmp.display(),
-            path.display(),
-            e
-        );
-        e.to_string()
-    })?;
-    Ok(())
 }
 
 #[tauri::command]
@@ -350,7 +327,7 @@ pub fn write_note(args: NoteWriteArgs, app: AppHandle) -> Result<i64, String> {
         }
     }
 
-    atomic_write(&abs, &args.markdown)?;
+    io_utils::atomic_write(&abs, &args.markdown)?;
     let (new_mtime, _) = file_meta(&abs)?;
     Ok(new_mtime)
 }
@@ -506,11 +483,7 @@ pub fn write_image_asset(args: WriteImageAssetArgs, app: AppHandle) -> Result<St
     let rel = storage::normalize_relative_path(&rel_path);
     let abs = safe_vault_abs_for_write(&root, &rel)?;
 
-    let dir = abs.parent().ok_or("invalid asset path")?;
-    std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-    let tmp = dir.join(format!("{}.tmp", storage::now_ms()));
-    std::fs::write(&tmp, args.bytes).map_err(|e| e.to_string())?;
-    std::fs::rename(&tmp, &abs).map_err(|e| e.to_string())?;
+    io_utils::atomic_write(&abs, args.bytes)?;
 
     Ok(rel)
 }
@@ -1335,5 +1308,5 @@ pub fn read_vault_file(
         return Err("file exceeds 5 MB limit".to_string());
     }
 
-    std::fs::read_to_string(&abs).map_err(|e| e.to_string())
+    io_utils::read_file_to_string(&abs)
 }
