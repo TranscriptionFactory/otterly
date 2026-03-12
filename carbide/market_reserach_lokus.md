@@ -103,6 +103,236 @@ So the real gaps are narrower:
 - kanban/calendar views
 - deeper live editor customization
 
+## Framework and Tooling Comparison
+
+This comparison matters because the “better base” question is not only about features. It is also about the frontend/runtime stack, build tooling, testing posture, dependency surface, and how easy the project will be to keep efficient over time.
+
+### Frontend Framework
+
+#### Lokus
+
+- React 19
+- Vite 7
+- large JSX component surfaces
+- Zustand-style stores plus React contexts
+- Radix React primitives
+- Tailwind CSS 3
+
+Practical effect:
+
+- broad ecosystem
+- lots of existing component and integration options
+- easier to find generic examples for advanced UI surfaces
+- more runtime indirection and more risk of broad component growth
+
+#### Otterly
+
+- Svelte 5
+- SvelteKit 2
+- Vite 5
+- feature-local stores plus explicit app stores
+- bits-ui + shadcn-svelte
+- Tailwind CSS 4
+
+Practical effect:
+
+- smaller and more explicit UI runtime model
+- stronger alignment with the existing architecture decision tree
+- less generic ecosystem breadth than React
+- cleaner mental model for tightly integrated desktop app features
+
+#### Verdict
+
+For Carbide’s long-term maintainability, Otterly’s frontend stack is the better fit.
+
+Lokus’s React stack is more ecosystem-rich. Otterly’s Svelte stack is more architecture-friendly and likely easier to keep disciplined.
+
+### Editor Stack
+
+#### Lokus
+
+- custom ProseMirror-based editor stack
+- many hand-built editor extensions
+- richer surface already present for tasks, embeds, markdown transforms, and UI affordances
+
+Key paths:
+
+- `src/editor/*`
+- `src/editor/extensions/*`
+
+#### Otterly
+
+- Milkdown on top of ProseMirror
+- internal adapters/plugins for wiki links, outline, slash commands, image paste, code views, tables, and search highlight
+
+Key paths:
+
+- `src/lib/features/editor/*`
+
+#### Verdict
+
+Both are ultimately ProseMirror-family editors, so the editor engine itself is not the deciding factor.
+
+The deciding factor is integration style:
+
+- Lokus: broader editor affordance surface today
+- Otterly: cleaner integration model for future plugin host and service boundaries
+
+### State Management and App Composition
+
+#### Lokus
+
+- Zustand-style global stores
+- React contexts
+- window/global workspace variables
+- several singleton-style managers
+
+Examples:
+
+- `src/stores/editorGroups.js`
+- `src/core/editor/live-settings.js`
+- `src/core/config/store.js`
+
+#### Otterly
+
+- typed Svelte stores
+- explicit `UIStore`, feature stores, `OpStore`
+- services and reactors define side-effect ownership clearly
+
+Examples:
+
+- `src/lib/app/orchestration/ui_store.svelte.ts`
+- `src/lib/app/orchestration/op_store.svelte.ts`
+- `src/lib/app/di/create_app_context.ts`
+
+#### Verdict
+
+Otterly’s composition model is substantially more future-proof.
+
+This is one of the strongest reasons not to switch bases.
+
+### Backend / Tauri Surface
+
+#### Lokus
+
+- Tauri 2
+- much larger backend dependency surface
+- sync, auth, iCal, deep links, audio capture, crash reporting, iroh, MCP, shell/process plugins, platform-specific features
+
+This gives Lokus more platform breadth, but also more operational and maintenance weight.
+
+#### Otterly
+
+- Tauri 2
+- narrower Rust dependency surface
+- focused on notes, indexing, git, watchers, terminal, document support
+
+This is a leaner backend core and a better place to add Carbide-specific systems deliberately.
+
+#### Verdict
+
+Lokus has the broader platform toolbox today. Otterly has the cleaner backend base for incremental extension.
+
+### Tooling Discipline
+
+#### Lokus
+
+- npm
+- Vitest
+- Playwright
+- ESLint-based frontend linting
+- lots of release and cross-platform build scripts
+
+This is stronger on packaging breadth and end-to-end surface.
+
+#### Otterly
+
+- pinned `pnpm`
+- TypeScript-first checks
+- `svelte-check`
+- Vitest
+- `oxlint`
+- explicit layering lint
+- stylelint
+- prettier
+
+This is stronger on internal architectural guardrails.
+
+#### Verdict
+
+Lokus has the broader release/build tooling surface. Otterly has the better architecture-governance tooling.
+
+For Carbide, Otterly’s tooling is more valuable because the major risk is architectural drift, not lack of packaging scripts.
+
+### Dependency Surface
+
+#### Lokus
+
+Frontend dependencies include:
+
+- graphology
+- react-force-graph
+- sigma
+- Excalidraw
+- isolated-vm
+- MCP SDK
+- Supabase
+- many ProseMirror packages
+
+This is powerful, but it increases baseline complexity and surface area.
+
+#### Otterly
+
+Frontend dependencies are more focused:
+
+- Milkdown
+- CodeMirror
+- xterm
+- pdfjs
+- Mermaid
+- Svelte UI primitives
+
+Otterly’s current fork is still too heavy in places, but the overall dependency story is narrower and more intentional.
+
+#### Verdict
+
+Otterly has the more future-proof dependency profile. Lokus has the more ambitious all-in-one tooling profile.
+
+### Testing Posture
+
+#### Lokus
+
+- stronger browser/e2e posture via Playwright
+- better coverage for product-surface workflows
+
+#### Otterly
+
+- stronger static and architectural validation
+- better alignment with clean-slice internal testing
+
+#### Verdict
+
+Lokus currently has the more complete product-surface testing setup. Otterly has the cleaner internal correctness and architecture guardrails.
+
+### Overall Tooling Verdict
+
+If the question is:
+
+> which stack is more immediately feature-rich and tooling-broad?
+
+the answer is Lokus.
+
+If the question is:
+
+> which stack is the better long-term implementation foundation for an efficient and extensible Carbide?
+
+the answer is Otterly.
+
+The short version is:
+
+- Lokus wins on breadth
+- Otterly wins on future-proof implementation discipline
+
 ## Area-by-Area Assessment
 
 ### 1. Graph View
