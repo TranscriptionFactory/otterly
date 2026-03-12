@@ -18,6 +18,8 @@ export type DocumentContentState = {
   status: "loading" | "ready" | "error";
   error_message: string | null;
   content: string | null;
+  buffer_id: string | null;
+  line_count: number | null;
   asset_url: string | null;
   last_accessed_at: number;
 };

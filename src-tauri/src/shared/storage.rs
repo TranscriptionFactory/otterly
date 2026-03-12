@@ -1,3 +1,4 @@
+use crate::shared::io_utils;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -87,22 +88,8 @@ pub fn load_store(app: &AppHandle) -> Result<VaultStore, String> {
 pub fn save_store(app: &AppHandle, store: &VaultStore) -> Result<(), String> {
     log::debug!("Saving vault store");
     let path = store_path(app)?;
-    let tmp = path.with_extension("json.tmp");
     let bytes = serde_json::to_vec_pretty(store).map_err(|e| e.to_string())?;
-    std::fs::write(&tmp, &bytes).map_err(|e| {
-        log::error!("Failed to write vault store to {}: {}", tmp.display(), e);
-        e.to_string()
-    })?;
-    std::fs::rename(&tmp, &path).map_err(|e| {
-        log::error!(
-            "Failed to rename vault store {} -> {}: {}",
-            tmp.display(),
-            path.display(),
-            e
-        );
-        e.to_string()
-    })?;
-    Ok(())
+    io_utils::atomic_write(&path, bytes)
 }
 
 pub fn vault_path_by_id(store: &VaultStore, vault_id: &str) -> Option<String> {

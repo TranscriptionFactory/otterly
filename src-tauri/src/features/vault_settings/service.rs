@@ -1,4 +1,5 @@
 use crate::shared::constants;
+use crate::shared::io_utils;
 use crate::shared::storage::{load_store, vault_path_by_id};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -53,10 +54,7 @@ fn read_vault_settings_file(path: &Path) -> Result<Option<Vec<u8>>, String> {
 }
 
 fn write_vault_settings_file(path: &Path, bytes: &[u8]) -> Result<(), String> {
-    let temporary_path = path.with_extension("json.tmp");
-    std::fs::write(&temporary_path, bytes).map_err(|e| e.to_string())?;
-    std::fs::rename(&temporary_path, path).map_err(|e| e.to_string())?;
-    Ok(())
+    io_utils::atomic_write(path, bytes)
 }
 
 fn save_vault_settings(

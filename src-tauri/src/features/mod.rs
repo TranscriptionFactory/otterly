@@ -1,6 +1,7 @@
 pub mod ai;
 pub mod git;
 pub mod notes;
+pub mod pipeline;
 pub mod search;
 pub mod settings;
 pub mod vault;

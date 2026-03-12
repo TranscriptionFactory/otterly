@@ -44,6 +44,7 @@ pub fn run() {
         .manage(PendingFileOpen::default())
         .manage(features::watcher::service::WatcherState::default())
         .manage(features::search::service::SearchDbState::default())
+        .manage(shared::buffer::BufferManager::new())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_pty::init())
@@ -64,6 +65,7 @@ pub fn run() {
             features::ai::service::ai_execute_claude,
             features::ai::service::ai_execute_codex,
             features::ai::service::ai_execute_ollama,
+            features::pipeline::service::pipeline_execute,
             features::vault::service::open_vault,
             features::vault::service::open_vault_by_id,
             features::vault::service::open_folder,
@@ -127,6 +129,9 @@ pub fn run() {
             features::git::service::git_set_remote_url,
             features::git::service::git_push_with_upstream,
             features::vault::service::resolve_file_to_vault,
+            shared::buffer::open_buffer,
+            shared::buffer::read_buffer_window,
+            shared::buffer::close_buffer,
             get_pending_file_open
         ])
         .register_uri_scheme_protocol("otterly-asset", |ctx, req| {
