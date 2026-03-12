@@ -36,7 +36,8 @@ Improve Carbide's data integrity, performance with large files, and architectura
     - [x] Implement a `ManagedBuffer` state in Rust that holds a `Rope` of the open file.
     - [x] Create a new Tauri command `read_buffer_window(buffer_id, start_line, end_line)`.
     - [x] Update the frontend `DocumentViewer` to use "windowed" loading for the `text` and `code` file types.
-- **Verification:** `CodeViewer` now uses `open_buffer` and `read_buffer_window` for text/code files, loading an initial 5000-line window for high performance.
+    - [x] **Unify NoteService:** Updated `read_note` and `write_note` to use `ManagedBuffer` for all Markdown files, ensuring consistent high-performance text handling across the backend.
+- **Verification:** `CodeViewer` now uses `open_buffer` and `read_buffer_window` for text/code files. `NoteService` uses `Rope` for all Markdown operations.
 
 ## Phase 3: Extensibility & Polish (Future)
 

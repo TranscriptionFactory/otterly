@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::State;
 use crate::shared::storage;
+use crate::shared::io_utils;
 
 pub struct ManagedBuffer {
     pub rope: Rope,
@@ -24,7 +25,7 @@ impl BufferManager {
         let root = storage::vault_path(app, &vault_id)?;
         let abs = crate::features::notes::service::safe_vault_abs(&root, &relative_path)?;
         
-        let content = crate::shared::io_utils::read_file_to_string(&abs)?;
+        let content = io_utils::read_file_to_string(&abs)?;
         let rope = Rope::from_str(&content);
         let line_count = rope.len_lines();
         
@@ -37,6 +38,27 @@ impl BufferManager {
             }),
         );
         Ok(line_count)
+    }
+
+    pub fn update_buffer(&self, id: String, content: &str) -> Result<(), String> {
+        let mut buffers = self.buffers.lock().unwrap();
+        if let Some(buffer) = buffers.get_mut(&id) {
+            let path = buffer.path.clone();
+            *buffer = Arc::new(ManagedBuffer {
+                rope: Rope::from_str(content),
+                path,
+            });
+            Ok(())
+        } else {
+            Err("Buffer not found".to_string())
+        }
+    }
+
+    pub fn save_buffer(&self, id: String) -> Result<(), String> {
+        let buffer = self.get_buffer(&id).ok_or("Buffer not found")?;
+        let content = buffer.rope.to_string();
+        io_utils::atomic_write(&buffer.path, content)?;
+        Ok(())
     }
 
     pub fn get_buffer(&self, id: &str) -> Option<Arc<ManagedBuffer>> {
@@ -59,6 +81,23 @@ pub fn open_buffer(
     manager: State<'_, BufferManager>,
 ) -> Result<usize, String> {
     manager.open_buffer(&app, id, vault_id, relative_path)
+}
+
+#[tauri::command]
+pub fn update_buffer(
+    id: String,
+    content: String,
+    manager: State<'_, BufferManager>,
+) -> Result<(), String> {
+    manager.update_buffer(id, &content)
+}
+
+#[tauri::command]
+pub fn save_buffer(
+    id: String,
+    manager: State<'_, BufferManager>,
+) -> Result<(), String> {
+    manager.save_buffer(id)
 }
 
 #[tauri::command]

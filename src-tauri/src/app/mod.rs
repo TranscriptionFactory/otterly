@@ -154,6 +154,8 @@ pub fn run() {
             features::git::service::git_push_with_upstream,
             features::vault::service::resolve_file_to_vault,
             shared::buffer::open_buffer,
+            shared::buffer::update_buffer,
+            shared::buffer::save_buffer,
             shared::buffer::read_buffer_window,
             shared::buffer::close_buffer,
             get_pending_file_open

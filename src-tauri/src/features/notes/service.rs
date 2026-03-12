@@ -1,3 +1,4 @@
+use crate::shared::buffer::BufferManager;
 use crate::shared::constants;
 use crate::shared::io_utils;
 use crate::shared::storage;
@@ -10,7 +11,7 @@ use std::path::Component;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Instant;
-use tauri::AppHandle;
+use tauri::{AppHandle, State};
 use walkdir::WalkDir;
 
 const VIEWABLE_EXTENSIONS: &[&str] = &[
@@ -291,14 +292,22 @@ pub fn list_notes(app: AppHandle, vault_id: String) -> Result<Vec<NoteMeta>, Str
 }
 
 #[tauri::command]
-pub fn read_note(app: AppHandle, vault_id: String, note_id: String) -> Result<NoteDoc, String> {
+pub fn read_note(
+    app: AppHandle,
+    vault_id: String,
+    note_id: String,
+    buffer_manager: State<'_, BufferManager>,
+) -> Result<NoteDoc, String> {
     log::debug!("Reading note vault_id={} note_id={}", vault_id, note_id);
+    let buffer_id = format!("note_{}", note_id);
+    buffer_manager.open_buffer(&app, buffer_id.clone(), vault_id.clone(), note_id.clone())?;
+
+    let buffer = buffer_manager
+        .get_buffer(&buffer_id)
+        .ok_or("Failed to retrieve buffer")?;
+    let markdown = buffer.rope.to_string();
     let root = storage::vault_path(&app, &vault_id)?;
-    let abs = safe_vault_abs(&root, &note_id)?;
-    let markdown = io_utils::read_file_to_string(&abs).map_err(|e| {
-        log::error!("Failed to read note {}: {}", note_id, e);
-        e
-    })?;
+
     Ok(NoteDoc {
         meta: build_note_meta(&root, &note_id)?,
         markdown,
@@ -306,7 +315,11 @@ pub fn read_note(app: AppHandle, vault_id: String, note_id: String) -> Result<No
 }
 
 #[tauri::command]
-pub fn write_note(args: NoteWriteArgs, app: AppHandle) -> Result<i64, String> {
+pub fn write_note(
+    args: NoteWriteArgs,
+    app: AppHandle,
+    buffer_manager: State<'_, BufferManager>,
+) -> Result<i64, String> {
     log::debug!(
         "Writing note vault_id={} note_id={}",
         args.vault_id,
@@ -327,7 +340,24 @@ pub fn write_note(args: NoteWriteArgs, app: AppHandle) -> Result<i64, String> {
         }
     }
 
-    io_utils::atomic_write(&abs, &args.markdown)?;
+    let buffer_id = format!("note_{}", args.note_id);
+    // Update the buffer in memory
+    buffer_manager
+        .update_buffer(buffer_id.clone(), &args.markdown)
+        .or_else(|_| {
+            // If buffer doesn't exist, open it first
+            buffer_manager.open_buffer(
+                &app,
+                buffer_id.clone(),
+                args.vault_id.clone(),
+                args.note_id.clone(),
+            )?;
+            buffer_manager.update_buffer(buffer_id.clone(), &args.markdown)
+        })?;
+
+    // Persist buffer to disk
+    buffer_manager.save_buffer(buffer_id)?;
+
     let (new_mtime, _) = file_meta(&abs)?;
     Ok(new_mtime)
 }
