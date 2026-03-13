@@ -1,4 +1,5 @@
 pub mod ai;
+pub mod bases;
 pub mod graph;
 pub mod git;
 pub mod notes;

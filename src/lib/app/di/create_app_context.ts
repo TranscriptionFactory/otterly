@@ -38,6 +38,7 @@ import {
 } from "$lib/features/graph";
 import { register_window_actions } from "$lib/features/window";
 import { AiService, register_ai_actions } from "$lib/features/ai";
+import { BasesService } from "$lib/features/bases";
 import { WatcherService } from "$lib/features/watcher";
 import { mount_reactors } from "$lib/reactors";
 import { create_workspace_reconcile } from "$lib/app/orchestration/workspace_reconcile";
@@ -232,6 +233,8 @@ export function create_app_context(input: {
 
   const ai_service = new AiService(input.ports.ai, stores.vault);
 
+  const bases_service = new BasesService(input.ports.bases, stores.bases);
+
   const base_action_input = {
     registry: action_registry,
     workspace_reconcile,
@@ -247,6 +250,7 @@ export function create_app_context(input: {
       outline: stores.outline,
       split_view: stores.split_view,
       graph: stores.graph,
+      bases: stores.bases,
     },
     services: {
       vault: vault_service,
@@ -261,6 +265,7 @@ export function create_app_context(input: {
       git: git_service,
       hotkey: hotkey_service,
       theme: theme_service,
+      bases: bases_service,
     },
     default_mount_config: input.default_mount_config,
   };
@@ -314,6 +319,7 @@ export function create_app_context(input: {
     terminal_store: stores.terminal,
     links_store: stores.links,
     graph_store: stores.graph,
+    bases_store: stores.bases,
     editor_service,
     note_service,
     vault_service,
@@ -323,6 +329,7 @@ export function create_app_context(input: {
     links_service,
     terminal_service,
     graph_service,
+    bases_service,
     watcher_service,
     action_registry,
     workspace_reconcile,
