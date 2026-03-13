@@ -1,7 +1,7 @@
 import { ACTION_IDS } from "$lib/app/action_registry/action_ids";
 import type { ActionRegistrationInput } from "$lib/app/action_registry/action_registration_input";
 
-type SidebarView = "explorer" | "dashboard" | "starred" | "tasks";
+type SidebarView = "explorer" | "dashboard" | "starred" | "tasks" | "graph";
 
 export function register_ui_actions(input: ActionRegistrationInput) {
   const { registry, stores, services } = input;
@@ -16,6 +16,9 @@ export function register_ui_actions(input: ActionRegistrationInput) {
     }
     if (value === "tasks") {
       return "tasks";
+    }
+    if (value === "graph") {
+      return "graph";
     }
     return "explorer";
   }
