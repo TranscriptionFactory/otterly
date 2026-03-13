@@ -1052,22 +1052,102 @@ pub fn query_bases(
     conn: &Connection,
     query: crate::features::search::model::BaseQuery,
 ) -> Result<crate::features::search::model::BaseQueryResults, String> {
-    // This is a simplified implementation.
-    // Real Bases query should support complex filtering, sorting, and pagination.
-    // For now, let's just return all notes with their properties and tags.
+    let mut where_clauses = Vec::new();
+    let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
-    let mut sql = "SELECT path, title, mtime_ms, size_bytes FROM notes".to_string();
+    for filter in &query.filters {
+        if filter.property == "tag" || filter.property == "tags" {
+            where_clauses.push(format!(
+                "path IN (SELECT path FROM note_tags WHERE tag = ?{})",
+                params.len() + 1
+            ));
+            params.push(Box::new(filter.value.clone()));
+        } else if filter.property == "path" {
+             let op = match filter.operator.as_str() {
+                "eq" => "=",
+                "neq" => "!=",
+                "contains" => "LIKE",
+                _ => "=",
+            };
+            let val = if filter.operator == "contains" {
+                format!("%{}%", filter.value)
+            } else {
+                filter.value.clone()
+            };
+            where_clauses.push(format!("path {} ?{}", op, params.len() + 1));
+            params.push(Box::new(val));
+        } else {
+            // Property filter
+            let op = match filter.operator.as_str() {
+                "eq" => "=",
+                "neq" => "!=",
+                "contains" => "LIKE",
+                "gt" => ">",
+                "lt" => "<",
+                "gte" => ">=",
+                "lte" => "<=",
+                _ => "=",
+            };
+            let val = if filter.operator == "contains" {
+                format!("%{}%", filter.value)
+            } else {
+                filter.value.clone()
+            };
 
-    // TODO: Apply filters
+            where_clauses.push(format!(
+                "path IN (SELECT path FROM note_properties WHERE key = ?{} AND value {} ?{})",
+                params.len() + 1,
+                op,
+                params.len() + 2
+            ));
+            params.push(Box::new(filter.property.clone()));
+            params.push(Box::new(val));
+        }
+    }
 
-    // TODO: Apply sorts
-    sql.push_str(" ORDER BY path ASC");
+    let where_sql = if where_clauses.is_empty() {
+        "".to_string()
+    } else {
+        format!("WHERE {}", where_clauses.join(" AND "))
+    };
 
-    sql.push_str(&format!(" LIMIT {} OFFSET {}", query.limit, query.offset));
+    let order_sql = if let Some(sort) = query.sort.first() {
+        if sort.property == "path" || sort.property == "title" || sort.property == "mtime_ms" {
+            format!("ORDER BY {} {}", sort.property, if sort.descending { "DESC" } else { "ASC" })
+        } else {
+            // Sort by property requires a subquery or join
+            format!(
+                "ORDER BY (SELECT value FROM note_properties WHERE path = notes.path AND key = ?{}) {}",
+                params.len() + 1,
+                if sort.descending { "DESC" } else { "ASC" }
+            )
+            // We'll need to add the sort property name to params if we use this
+        }
+    } else {
+        "ORDER BY path ASC".to_string()
+    };
+
+    // Re-bind sort param if needed
+    let mut final_params = params;
+    if let Some(sort) = query.sort.first() {
+        if sort.property != "path" && sort.property != "title" && sort.property != "mtime_ms" {
+            final_params.push(Box::new(sort.property.clone()));
+        }
+    }
+
+    let sql = format!(
+        "SELECT path, title, mtime_ms, size_bytes FROM notes {} {} LIMIT {} OFFSET {}",
+        where_sql, order_sql, query.limit, query.offset
+    );
 
     let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+    
+    // rusqlite's params! macro doesn't work well with Vec of trait objects
+    // We have to use a slice of trait objects
+    let param_refs: Vec<&dyn rusqlite::ToSql> = final_params.iter().map(|b| b.as_ref()).collect();
+
     let note_rows = stmt
-        .query_map([], |row| note_meta_from_row(row))
+        .query_map(&param_refs[..], |row| note_meta_from_row(row))
         .map_err(|e| e.to_string())?;
 
     let mut rows = Vec::new();
@@ -1116,8 +1196,16 @@ pub fn query_bases(
         });
     }
 
-    let total: usize = conn
-        .query_row("SELECT COUNT(*) FROM notes", [], |row| row.get(0))
+    let count_sql = format!("SELECT COUNT(*) FROM notes {}", where_sql);
+    let mut count_stmt = conn.prepare(&count_sql).map_err(|e| e.to_string())?;
+    // We need to exclude the sort param for count
+    let count_param_refs = if final_params.len() > params.len() {
+        &param_refs[..params.len()]
+    } else {
+        &param_refs[..]
+    };
+    
+    let total: usize = count_stmt.query_row(count_param_refs, |row| row.get(0))
         .map_err(|e| e.to_string())?;
 
     Ok(crate::features::search::model::BaseQueryResults { rows, total })

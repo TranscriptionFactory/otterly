@@ -30,4 +30,31 @@ export class BasesService {
       this.store.loading = false;
     }
   }
+
+  async save_view(vault_id: VaultId, path: string, name: string) {
+    const view = {
+      name,
+      query: this.store.query,
+      view_mode: this.store.active_view_mode
+    };
+    try {
+      await this.port.save_view(vault_id, path, view);
+    } catch (e) {
+      this.store.error = String(e);
+    }
+  }
+
+  async load_view(vault_id: VaultId, path: string) {
+    this.store.loading = true;
+    try {
+      const view = await this.port.load_view(vault_id, path);
+      this.store.query = view.query;
+      this.store.active_view_mode = view.view_mode as "table" | "list";
+      await this.run_query(vault_id);
+    } catch (e) {
+      this.store.error = String(e);
+    } finally {
+      this.store.loading = false;
+    }
+  }
 }
