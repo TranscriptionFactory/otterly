@@ -671,8 +671,6 @@
               </div>
             </div>
 
-            </div>
-
             <div class="space-y-4 border-t pt-4">
               <div
                 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
