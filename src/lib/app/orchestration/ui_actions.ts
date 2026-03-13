@@ -103,7 +103,7 @@ export function register_ui_actions(input: ActionRegistrationInput) {
   registry.register({
     id: ACTION_IDS.ui_toggle_tasks_panel,
     label: "Toggle Tasks Panel",
-    shortcut: "CmdOrCtrl+Shift+T",
+    shortcut: "CmdOrCtrl+Alt+T",
     execute: async () => {
       if (
         stores.ui.context_rail_open &&

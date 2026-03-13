@@ -140,7 +140,7 @@ export const DEFAULT_HOTKEYS: HotkeyBinding[] = [
   },
   {
     action_id: ACTION_IDS.ui_toggle_tasks_panel,
-    key: "CmdOrCtrl+Shift+T",
+    key: "CmdOrCtrl+Alt+T",
     phase: "capture",
     label: "Toggle Tasks Panel",
     description: "Show or hide the tasks panel",

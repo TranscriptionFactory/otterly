@@ -62,6 +62,9 @@ importers:
       '@xterm/xterm':
         specifier: ^6.0.0
         version: 6.0.0
+      badgerly:
+        specifier: 'link:'
+        version: 'link:'
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -89,9 +92,6 @@ importers:
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
-      otterly:
-        specifier: 'link:'
-        version: 'link:'
       papaparse:
         specifier: ^5.5.3
         version: 5.5.3

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve_graph_canvas_view } from "$lib/features/graph/domain/graph_canvas_view";
-  type { GraphNeighborhoodSnapshot } from "$lib/features/graph/ports";
+  import type { GraphNeighborhoodSnapshot } from "$lib/features/graph/ports";
 
   type Props = {
     snapshot: GraphNeighborhoodSnapshot;
