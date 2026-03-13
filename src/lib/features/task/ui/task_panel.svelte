@@ -12,7 +12,6 @@
   import Kanban from "@lucide/svelte/icons/kanban";
   import Calendar from "@lucide/svelte/icons/calendar";
   import Columns from "@lucide/svelte/icons/columns";
-  import ArrowLeftRight from "@lucide/svelte/icons/arrow-left-right";
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { ACTION_IDS } from "$lib/app";
@@ -47,15 +46,6 @@
     { value: "note", label: "By Note" },
     { value: "section", label: "By Section" },
   ] as const;
-
-  function toggle_side() {
-    const current_side = stores.ui.editor_settings.tasks_panel_side;
-    const next_side = current_side === "left" ? "right" : "left";
-    void services.settings.update_settings({
-      ...stores.ui.editor_settings,
-      tasks_panel_side: next_side,
-    });
-  }
 </script>
 
 <div class="flex flex-col h-full bg-background border-r">
@@ -66,15 +56,6 @@
         Tasks
       </h2>
       <div class="flex items-center gap-1">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          class="h-6 w-6" 
-          onclick={toggle_side}
-          title="Move to other side"
-        >
-          <ArrowLeftRight size={14} />
-        </Button>
         <Button 
           variant="ghost" 
           size="icon" 

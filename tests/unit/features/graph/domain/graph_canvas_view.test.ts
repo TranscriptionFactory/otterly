@@ -107,4 +107,40 @@ describe("resolve_graph_canvas_view", () => {
     expect(view.nodes.map((n) => n.label)).toContain("Center");
     expect(view.nodes.map((n) => n.label)).toContain("Backlink");
   });
+
+  it("centers nodes based on container_width", () => {
+    const wide_view = resolve_graph_canvas_view({
+      snapshot: mock_snapshot,
+      filter_query: "",
+      selected_node_ids: [],
+      hovered_node_id: null,
+      container_width: 800,
+    });
+    
+    const narrow_view = resolve_graph_canvas_view({
+      snapshot: mock_snapshot,
+      filter_query: "",
+      selected_node_ids: [],
+      hovered_node_id: null,
+      container_width: 400,
+    });
+    
+    const wide_center = wide_view.nodes.find((n) => n.kind === "center");
+    const narrow_center = narrow_view.nodes.find((n) => n.kind === "center");
+    
+    // NODE_WIDTH is 176
+    // CENTER_X = floor((800 - 176) / 2) = 312
+    // CENTER_X = floor((400 - 176) / 2) = 112
+    expect(wide_center?.x).toBe(312);
+    expect(narrow_center?.x).toBe(112);
+    
+    // Right nodes should also adapt
+    const wide_out = wide_view.nodes.find((n) => n.kind === "outlink");
+    const narrow_out = narrow_view.nodes.find((n) => n.kind === "outlink");
+    
+    // RIGHT_X = 800 - 176 - 24 = 600
+    // RIGHT_X = 400 - 176 - 24 = 200
+    expect(wide_out?.x).toBe(600);
+    expect(narrow_out?.x).toBe(200);
+  });
 });

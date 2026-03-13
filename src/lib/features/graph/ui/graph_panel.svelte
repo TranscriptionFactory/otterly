@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { RefreshCw, Target, X, ArrowLeftRight } from "@lucide/svelte";
+  import { RefreshCw, Target, X } from "@lucide/svelte";
   import { ACTION_IDS } from "$lib/app";
   import { use_app_context } from "$lib/app/context/app_context.svelte";
   import { Button } from "$lib/components/ui/button";
@@ -14,6 +14,24 @@
   const filter_query = $derived(stores.graph.filter_query);
   const has_snapshot = $derived(snapshot !== null);
 
+  let container_element = $state<HTMLElement | null>(null);
+  let container_width = $state<number>(760);
+
+  $effect(() => {
+    if (!container_element) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          container_width = entry.contentRect.width;
+        }
+      }
+    });
+
+    observer.observe(container_element);
+    return () => observer.disconnect();
+  });
+
   async function open_existing_node(path: string) {
     await action_registry.execute(ACTION_IDS.note_open, path);
     await action_registry.execute(ACTION_IDS.graph_focus_active_note);
@@ -22,16 +40,6 @@
   async function open_orphan_node(path: string) {
     await action_registry.execute(ACTION_IDS.note_open_wiki_link, path);
     await action_registry.execute(ACTION_IDS.graph_focus_active_note);
-  }
-
-  function toggle_side() {
-    const { services } = use_app_context();
-    const current_side = stores.ui.editor_settings.graph_panel_side;
-    const next_side = current_side === "left" ? "right" : "left";
-    void services.settings.update_settings({
-      ...stores.ui.editor_settings,
-      graph_panel_side: next_side,
-    });
   }
 </script>
 
@@ -45,14 +53,6 @@
     </div>
 
     <div class="GraphPanel__actions">
-      <Button
-        variant="ghost"
-        size="icon"
-        onclick={toggle_side}
-        title="Move to other side"
-      >
-        <ArrowLeftRight size={14} />
-      </Button>
       <Button
         variant="ghost"
         size="icon"
@@ -98,7 +98,7 @@
     </div>
   {/if}
 
-  <div class="GraphPanel__body">
+  <div class="GraphPanel__body" bind:this={container_element}>
     {#if status === "loading"}
       <p class="GraphPanel__message">Loading graph neighborhood...</p>
     {:else if status === "error"}
@@ -109,6 +109,7 @@
       <GraphCanvas
         {snapshot}
         {filter_query}
+        {container_width}
         selected_node_ids={stores.graph.selected_node_ids}
         hovered_node_id={stores.graph.hovered_node_id}
         on_select_node={(node_id) =>
