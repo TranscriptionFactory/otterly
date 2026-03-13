@@ -13,6 +13,7 @@ import { TerminalStore } from "$lib/features/terminal";
 import { DocumentStore } from "$lib/features/document";
 import { AiStore } from "$lib/features/ai";
 import { GraphStore } from "$lib/features/graph";
+import { BasesStore } from "$lib/features/bases";
 
 export type AppStores = {
   vault: VaultStore;
@@ -30,6 +31,7 @@ export type AppStores = {
   document: DocumentStore;
   ai: AiStore;
   graph: GraphStore;
+  bases: BasesStore;
 };
 
 export function create_app_stores(): AppStores {
@@ -49,5 +51,6 @@ export function create_app_stores(): AppStores {
     document: new DocumentStore(),
     ai: new AiStore(),
     graph: new GraphStore(),
+    bases: new BasesStore(),
   };
 }

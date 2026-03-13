@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct IndexNoteMeta {
@@ -24,4 +25,51 @@ pub struct SearchHit {
     pub note: IndexNoteMeta,
     pub score: f32,
     pub snippet: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PropertyValue {
+    pub value: String,
+    pub property_type: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BaseNoteRow {
+    pub note: IndexNoteMeta,
+    pub properties: BTreeMap<String, PropertyValue>,
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BaseQueryResults {
+    pub rows: Vec<BaseNoteRow>,
+    pub total: usize,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct BaseFilter {
+    pub property: String,
+    pub operator: String, // "eq", "neq", "contains", "gt", "lt", etc.
+    pub value: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct BaseSort {
+    pub property: String,
+    pub descending: bool,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct BaseQuery {
+    pub filters: Vec<BaseFilter>,
+    pub sort: Vec<BaseSort>,
+    pub limit: usize,
+    pub offset: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PropertyInfo {
+    pub name: String,
+    pub property_type: String,
+    pub count: usize,
 }

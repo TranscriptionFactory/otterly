@@ -1,5 +1,5 @@
 use crate::features::notes::service as notes_service;
-use crate::features::search::link_parser;
+use crate::features::search::{frontmatter, link_parser};
 use crate::features::search::model::{IndexNoteMeta, SearchHit, SearchScope};
 use crate::shared::constants;
 use crate::shared::storage;
@@ -151,7 +151,25 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
             PRIMARY KEY (source_path, target_path)
         );
 
-        CREATE INDEX IF NOT EXISTS idx_outlinks_target ON outlinks(target_path);"
+        CREATE INDEX IF NOT EXISTS idx_outlinks_target ON outlinks(target_path);
+
+        CREATE TABLE IF NOT EXISTS note_properties (
+            path TEXT NOT NULL,
+            key TEXT NOT NULL,
+            value TEXT NOT NULL,
+            type TEXT NOT NULL,
+            PRIMARY KEY (path, key)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_note_properties_key ON note_properties(key);
+
+        CREATE TABLE IF NOT EXISTS note_tags (
+            path TEXT NOT NULL,
+            tag TEXT NOT NULL,
+            PRIMARY KEY (path, tag)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_note_tags_tag ON note_tags(tag);"
     ))
     .map_err(|e| e.to_string())
 }
@@ -187,6 +205,43 @@ pub fn upsert_note(conn: &Connection, meta: &IndexNoteMeta, body: &str) -> Resul
     )
     .map_err(|e| e.to_string())?;
 
+    // Index frontmatter
+    let fm = frontmatter::extract_frontmatter(body);
+
+    conn.execute(
+        "DELETE FROM note_properties WHERE path = ?1",
+        params![meta.path],
+    )
+    .map_err(|e| e.to_string())?;
+
+    for (key, value) in fm.properties {
+        let (val_str, val_type) = match value {
+            serde_yml::Value::String(s) => (s, "string"),
+            serde_yml::Value::Number(n) => (n.to_string(), "number"),
+            serde_yml::Value::Bool(b) => (b.to_string(), "boolean"),
+            _ => (
+                serde_json::to_string(&value).unwrap_or_default(),
+                "json",
+            ),
+        };
+        conn.execute(
+            "REPLACE INTO note_properties (path, key, value, type) VALUES (?1, ?2, ?3, ?4)",
+            params![meta.path, key, val_str, val_type],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+
+    conn.execute("DELETE FROM note_tags WHERE path = ?1", params![meta.path])
+        .map_err(|e| e.to_string())?;
+
+    for tag in fm.tags {
+        conn.execute(
+            "REPLACE INTO note_tags (path, tag) VALUES (?1, ?2)",
+            params![meta.path, tag],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+
     Ok(())
 }
 
@@ -196,6 +251,10 @@ pub fn remove_note(conn: &Connection, path: &str) -> Result<(), String> {
     conn.execute("DELETE FROM notes_fts WHERE path = ?1", params![path])
         .map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM outlinks WHERE source_path = ?1", params![path])
+        .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM note_properties WHERE path = ?1", params![path])
+        .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM note_tags WHERE path = ?1", params![path])
         .map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -227,6 +286,18 @@ pub fn remove_notes_by_prefix(conn: &Connection, prefix: &str) -> Result<(), Str
         .and_then(|_| {
             conn.execute(
                 "DELETE FROM outlinks WHERE source_path LIKE ?1 ESCAPE '\\'",
+                params![like_pattern],
+            )
+        })
+        .and_then(|_| {
+            conn.execute(
+                "DELETE FROM note_properties WHERE path LIKE ?1 ESCAPE '\\'",
+                params![like_pattern],
+            )
+        })
+        .and_then(|_| {
+            conn.execute(
+                "DELETE FROM note_tags WHERE path LIKE ?1 ESCAPE '\\'",
                 params![like_pattern],
             )
         })
@@ -868,6 +939,16 @@ pub fn rename_folder_paths(
          WHERE target_path LIKE ?3 ESCAPE '\\'",
         params![new_prefix, old_len, like_pattern],
     ))
+    .and_then(|_| conn.execute(
+        "UPDATE note_properties SET path = ?1 || substr(path, ?2 + 1)
+         WHERE path LIKE ?3 ESCAPE '\\'",
+        params![new_prefix, old_len, like_pattern],
+    ))
+    .and_then(|_| conn.execute(
+        "UPDATE note_tags SET path = ?1 || substr(path, ?2 + 1)
+         WHERE path LIKE ?3 ESCAPE '\\'",
+        params![new_prefix, old_len, like_pattern],
+    ))
     .map_err(|e| e.to_string());
 
     match result {
@@ -903,6 +984,18 @@ pub fn rename_note_path(conn: &Connection, old_path: &str, new_path: &str) -> Re
                 params![new_path, old_path],
             )
         })
+        .and_then(|_| {
+            conn.execute(
+                "UPDATE note_properties SET path = ?1 WHERE path = ?2",
+                params![new_path, old_path],
+            )
+        })
+        .and_then(|_| {
+            conn.execute(
+                "UPDATE note_tags SET path = ?1 WHERE path = ?2",
+                params![new_path, old_path],
+            )
+        })
         .map(|_| ())
         .map_err(|e| e.to_string());
 
@@ -929,4 +1022,103 @@ pub fn get_backlinks(conn: &Connection, path: &str) -> Result<Vec<IndexNoteMeta>
 
     rows.collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())
+}
+
+pub fn list_all_properties(conn: &Connection) -> Result<Vec<crate::features::search::model::PropertyInfo>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT key, type, COUNT(*)
+             FROM note_properties
+             GROUP BY key, type
+             ORDER BY key ASC",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(crate::features::search::model::PropertyInfo {
+                name: row.get(0)?,
+                property_type: row.get(1)?,
+                count: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())
+}
+
+pub fn query_bases(
+    conn: &Connection,
+    query: crate::features::search::model::BaseQuery,
+) -> Result<crate::features::search::model::BaseQueryResults, String> {
+    // This is a simplified implementation.
+    // Real Bases query should support complex filtering, sorting, and pagination.
+    // For now, let's just return all notes with their properties and tags.
+
+    let mut sql = "SELECT path, title, mtime_ms, size_bytes FROM notes".to_string();
+
+    // TODO: Apply filters
+
+    // TODO: Apply sorts
+    sql.push_str(" ORDER BY path ASC");
+
+    sql.push_str(&format!(" LIMIT {} OFFSET {}", query.limit, query.offset));
+
+    let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+    let note_rows = stmt
+        .query_map([], |row| note_meta_from_row(row))
+        .map_err(|e| e.to_string())?;
+
+    let mut rows = Vec::new();
+    for note_res in note_rows {
+        let note = note_res.map_err(|e| e.to_string())?;
+
+        // Fetch properties
+        let mut prop_stmt = conn
+            .prepare("SELECT key, value, type FROM note_properties WHERE path = ?1")
+            .map_err(|e| e.to_string())?;
+        let prop_rows = prop_stmt
+            .query_map(params![note.path], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    crate::features::search::model::PropertyValue {
+                        value: row.get(1)?,
+                        property_type: row.get(2)?,
+                    },
+                ))
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut properties = BTreeMap::new();
+        for prop_res in prop_rows {
+            let (key, val) = prop_res.map_err(|e| e.to_string())?;
+            properties.insert(key, val);
+        }
+
+        // Fetch tags
+        let mut tag_stmt = conn
+            .prepare("SELECT tag FROM note_tags WHERE path = ?1")
+            .map_err(|e| e.to_string())?;
+        let tag_rows = tag_stmt
+            .query_map(params![note.path], |row| row.get::<_, String>(0))
+            .map_err(|e| e.to_string())?;
+
+        let mut tags = Vec::new();
+        for tag_res in tag_rows {
+            tags.push(tag_res.map_err(|e| e.to_string())?);
+        }
+
+        rows.push(crate::features::search::model::BaseNoteRow {
+            note,
+            properties,
+            tags,
+        });
+    }
+
+    let total: usize = conn
+        .query_row("SELECT COUNT(*) FROM notes", [], |row| row.get(0))
+        .map_err(|e| e.to_string())?;
+
+    Ok(crate::features::search::model::BaseQueryResults { rows, total })
 }
