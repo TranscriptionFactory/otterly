@@ -21,6 +21,7 @@
 
     if (stores.ai.dialog.open) {
       stores.ui.set_context_rail_tab("ai");
+      void action_registry.execute(ACTION_IDS.ai_open_assistant);
       return;
     }
 

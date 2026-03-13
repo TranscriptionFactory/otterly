@@ -228,7 +228,10 @@ function calculate_cursor_info(view: EditorView): CursorInfo {
 
 const cursor_plugin_key = new PluginKey("cursor-tracker");
 
-function create_cursor_plugin(on_cursor_change: (info: CursorInfo) => void) {
+function create_cursor_plugin(
+  on_cursor_change: (info: CursorInfo) => void,
+  on_selection_change?: (selection: EditorSelectionSnapshot | null) => void,
+) {
   return $prose(
     () =>
       new Plugin({
@@ -241,11 +244,15 @@ function create_cursor_plugin(on_cursor_change: (info: CursorInfo) => void) {
             total_words: 0,
           };
           let prev_doc: ProseNode | null = null;
+          let prev_selection: EditorState["selection"] | null = null;
 
           return {
             update: (view) => {
               const doc_changed = view.state.doc !== prev_doc;
+              const selection_changed =
+                doc_changed || view.state.selection !== prev_selection;
               prev_doc = view.state.doc;
+              prev_selection = view.state.selection;
 
               if (doc_changed) {
                 cached = calculate_cursor_info(view);
@@ -260,6 +267,19 @@ function create_cursor_plugin(on_cursor_change: (info: CursorInfo) => void) {
               }
 
               on_cursor_change(cached);
+
+              if (selection_changed && on_selection_change) {
+                const { from, to } = view.state.selection;
+                if (from === to) {
+                  on_selection_change(null);
+                } else {
+                  on_selection_change({
+                    text: view.state.doc.textBetween(from, to, "\n", "\n"),
+                    start: null,
+                    end: null,
+                  });
+                }
+              }
             },
           };
         },
@@ -286,6 +306,7 @@ export function create_milkdown_editor_port(args?: {
         on_markdown_change,
         on_dirty_state_change,
         on_cursor_change,
+        on_selection_change,
         on_internal_link_click,
         on_external_link_click,
         on_image_paste_requested,
@@ -521,7 +542,9 @@ export function create_milkdown_editor_port(args?: {
       }
 
       if (on_cursor_change) {
-        builder = builder.use(create_cursor_plugin(on_cursor_change));
+        builder = builder.use(
+          create_cursor_plugin(on_cursor_change, on_selection_change),
+        );
       }
 
       if (on_image_paste_requested) {

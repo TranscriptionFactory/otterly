@@ -90,6 +90,16 @@ export function register_ai_actions(
       ai_store.dialog.context?.note_path === context.note_path &&
       (provider === undefined || ai_store.dialog.provider === provider)
     ) {
+      const selection = context.selection;
+      ai_store.update_context({
+        note_path: context.note_path,
+        note_title: context.note_title,
+        note_markdown: context.markdown,
+        selection,
+        target:
+          selection && selection.text.trim() !== "" ? "selection" : "full_note",
+      });
+
       if (ai_store.dialog.cli_status === "idle" && provider !== undefined) {
         const revision = ++dialog_revision;
         await refresh_cli_status(provider, revision);
@@ -238,6 +248,15 @@ export function register_ai_actions(
         return;
       }
       ai_store.set_target(next_target);
+    },
+  });
+
+  registry.register({
+    id: ACTION_IDS.ai_update_context,
+    label: "Update AI Context",
+    execute: (context: unknown) => {
+      if (!context) return;
+      ai_store.update_context(context as any);
     },
   });
 

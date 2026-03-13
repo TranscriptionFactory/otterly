@@ -386,6 +386,11 @@ export class EditorService {
           this.editor_store.set_cursor(id, cursor);
         });
       },
+      on_selection_change: (selection: EditorSelectionSnapshot | null) => {
+        this.with_active_note_id(generation, (id) => {
+          this.editor_store.set_selection(id, selection);
+        });
+      },
       on_internal_link_click: (
         raw_path: string,
         base_note_path: string,

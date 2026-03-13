@@ -182,6 +182,29 @@ describe("register_ai_actions", () => {
     expect(ai_store.dialog.context?.target).toBe("selection");
   });
 
+  it("updates the session context when the AI panel is already open", async () => {
+    const { registry, ai_store, services } = create_harness();
+
+    await registry.execute(ACTION_IDS.ai_open_assistant);
+
+    const next_context = {
+      note_path: as_note_path("docs/demo.md"),
+      note_title: "demo",
+      note_markdown: as_markdown_text("# New Content"),
+      selection: {
+        text: "Content",
+        start: 6,
+        end: 13,
+      },
+      target: "selection" as const,
+    };
+
+    await registry.execute(ACTION_IDS.ai_update_context, next_context);
+
+    expect(ai_store.dialog.context?.note_markdown).toBe("# New Content");
+    expect(ai_store.dialog.context?.selection?.text).toBe("Content");
+  });
+
   it("records turns as assistant executions complete", async () => {
     const { registry, ai_store, ai_service } = create_harness();
     ai_service.execute = vi.fn().mockResolvedValue({
