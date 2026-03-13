@@ -77,19 +77,19 @@ describe("resolve_graph_canvas_view", () => {
 
     expect(view.nodes).toHaveLength(5); // center, back, out, both, orphan
     
-    const center_node = view.nodes.find((n) => n.kind === "center")!;
-    expect(center_node.path).toBe("center.md");
-    expect(center_node.selected).toBe(true);
+    const center_node = view.nodes.find((n) => n.kind === "center");
+    expect(center_node?.path).toBe("center.md");
+    expect(center_node?.selected).toBe(true);
 
-    const back_node = view.nodes.find((n) => n.kind === "backlink")!;
-    expect(back_node.hovered).toBe(true);
+    const back_node = view.nodes.find((n) => n.kind === "backlink");
+    expect(back_node?.hovered).toBe(true);
 
-    const both_node = view.nodes.find((n) => n.kind === "both")!;
-    expect(both_node.path).toBe("both.md");
+    const both_node = view.nodes.find((n) => n.kind === "both");
+    expect(both_node?.path).toBe("both.md");
 
-    const orphan_node = view.nodes.find((n) => n.kind === "orphan")!;
-    expect(orphan_node.path).toBe("orphan.md");
-    expect(orphan_node.existing).toBe(false);
+    const orphan_node = view.nodes.find((n) => n.kind === "orphan");
+    expect(orphan_node?.path).toBe("orphan.md");
+    expect(orphan_node?.existing).toBe(false);
 
     expect(view.edges).toHaveLength(4); // from center to others
   });

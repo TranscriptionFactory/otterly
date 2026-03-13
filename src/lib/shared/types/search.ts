@@ -18,6 +18,7 @@ export type SearchCommandDefinition = {
     | "git_add_remote"
     | "ai_assistant"
     | "toggle_links_panel"
+    | "toggle_graph_panel"
     | "toggle_outline_panel"
     | "check_for_updates"
     | "export_as_pdf"

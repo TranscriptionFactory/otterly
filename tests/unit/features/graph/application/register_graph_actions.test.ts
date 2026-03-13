@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
 import { describe, it, expect, vi } from "vitest";
 import { register_graph_actions } from "$lib/features/graph/application/graph_actions";
 import { ACTION_IDS } from "$lib/app/action_registry/action_ids";
@@ -40,9 +41,8 @@ describe("register_graph_actions", () => {
   it("registers all graph actions", () => {
     register_graph_actions(input);
 
-    const registered_ids = vi.mocked(mock_registry.register).mock.calls.map(
-      (call) => (call[0] as any).id,
-    );
+    const calls = vi.mocked(mock_registry.register).mock.calls;
+    const registered_ids = calls.map((call) => (call[0] as { id: string }).id);
 
     expect(registered_ids).toContain(ACTION_IDS.graph_toggle_panel);
     expect(registered_ids).toContain(ACTION_IDS.graph_close);
@@ -55,31 +55,31 @@ describe("register_graph_actions", () => {
 
   it("toggles the graph panel", async () => {
     register_graph_actions(input);
-    const toggle_action = vi.mocked(mock_registry.register).mock.calls.find(
-      (call) => (call[0] as any).id === ACTION_IDS.graph_toggle_panel,
-    )![0] as any;
+    const calls = vi.mocked(mock_registry.register).mock.calls;
+    const toggle_call = calls.find((call) => (call[0] as { id: string }).id === ACTION_IDS.graph_toggle_panel);
+    const toggle_action = toggle_call ? (toggle_call[0] as { execute: () => Promise<void> }) : null;
 
     // Open when closed
-    await toggle_action.execute();
-    expect(mock_ui_store.set_context_rail_tab).toHaveBeenCalledWith("graph");
-    expect(mock_graph_service.focus_active_note).toHaveBeenCalled();
+    await toggle_action?.execute();
+    expect(vi.mocked(mock_ui_store.set_context_rail_tab)).toHaveBeenCalledWith("graph");
+    expect(vi.mocked(mock_graph_service.focus_active_note)).toHaveBeenCalled();
 
     // Close when open and active
     graph_store.set_panel_open(true);
     (mock_ui_store as any).context_rail_tab = "graph";
-    await toggle_action.execute();
-    expect(mock_graph_service.close_panel).toHaveBeenCalled();
-    expect(mock_ui_store.close_context_rail).toHaveBeenCalledWith("links");
+    await toggle_action?.execute();
+    expect(vi.mocked(mock_graph_service.close_panel)).toHaveBeenCalled();
+    expect(vi.mocked(mock_ui_store.close_context_rail)).toHaveBeenCalledWith("links");
   });
 
   it("closes with preserve_context_rail option", async () => {
     register_graph_actions(input);
-    const close_action = vi.mocked(mock_registry.register).mock.calls.find(
-      (call) => (call[0] as any).id === ACTION_IDS.graph_close,
-    )![0] as any;
+    const calls = vi.mocked(mock_registry.register).mock.calls;
+    const close_call = calls.find((call) => (call[0] as { id: string }).id === ACTION_IDS.graph_close);
+    const close_action = close_call ? (close_call[0] as { execute: (args: unknown) => Promise<void> }) : null;
 
-    await close_action.execute({ preserve_context_rail: true });
-    expect(mock_graph_service.close_panel).toHaveBeenCalled();
-    expect(mock_ui_store.set_context_rail_tab).toHaveBeenCalledWith("links");
+    await close_action?.execute({ preserve_context_rail: true });
+    expect(vi.mocked(mock_graph_service.close_panel)).toHaveBeenCalled();
+    expect(vi.mocked(mock_ui_store.set_context_rail_tab)).toHaveBeenCalledWith("links");
   });
 });

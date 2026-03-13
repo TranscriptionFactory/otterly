@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi } from "vitest";
 import { GraphService } from "$lib/features/graph/application/graph_service";
-import type { GraphPort } from "$lib/features/graph/ports";
+import type { GraphPort, GraphNeighborhoodSnapshot } from "$lib/features/graph/ports";
 import { GraphStore } from "$lib/features/graph/state/graph_store.svelte";
 import type { VaultStore } from "$lib/features/vault";
 import type { EditorStore } from "$lib/features/editor";
@@ -41,12 +42,12 @@ describe("GraphService", () => {
       outlinks: [],
       orphan_links: [],
       stats: {},
-    };
-    vi.mocked(mock_graph_port.load_note_neighborhood).mockResolvedValue(snapshot as any);
+    } as unknown as GraphNeighborhoodSnapshot;
+    vi.mocked(mock_graph_port.load_note_neighborhood).mockResolvedValue(snapshot);
 
     await service.load_note_neighborhood("test.md");
 
-    expect(mock_graph_port.load_note_neighborhood).toHaveBeenCalledWith("vault-1", "test.md");
+    expect(vi.mocked(mock_graph_port.load_note_neighborhood)).toHaveBeenCalledWith("vault-1", "test.md");
     expect(graph_store.snapshot).toEqual(snapshot);
     expect(graph_store.status).toBe("ready");
     expect(graph_store.panel_open).toBe(true);
@@ -68,12 +69,12 @@ describe("GraphService", () => {
       outlinks: [],
       orphan_links: [],
       stats: {},
-    };
-    vi.mocked(mock_graph_port.load_note_neighborhood).mockResolvedValue(snapshot as any);
+    } as unknown as GraphNeighborhoodSnapshot;
+    vi.mocked(mock_graph_port.load_note_neighborhood).mockResolvedValue(snapshot);
 
     await service.focus_active_note();
 
-    expect(mock_graph_port.load_note_neighborhood).toHaveBeenCalledWith("vault-1", "test.md");
+    expect(vi.mocked(mock_graph_port.load_note_neighborhood)).toHaveBeenCalledWith("vault-1", "test.md");
     expect(graph_store.center_note_path).toBe("test.md");
   });
 
@@ -99,11 +100,11 @@ describe("GraphService", () => {
       outlinks: [],
       orphan_links: [],
       stats: {},
-    };
-    vi.mocked(mock_graph_port.load_note_neighborhood).mockResolvedValue(snapshot as any);
+    } as unknown as GraphNeighborhoodSnapshot;
+    vi.mocked(mock_graph_port.load_note_neighborhood).mockResolvedValue(snapshot);
 
     await service.refresh_current();
 
-    expect(mock_graph_port.load_note_neighborhood).toHaveBeenCalledWith("vault-1", "test.md");
+    expect(vi.mocked(mock_graph_port.load_note_neighborhood)).toHaveBeenCalledWith("vault-1", "test.md");
   });
 });

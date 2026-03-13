@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 import { describe, expect, it, vi } from "vitest";
 import { ActionRegistry } from "$lib/app/action_registry/action_registry";
 import { ACTION_IDS } from "$lib/app/action_registry/action_ids";
@@ -44,7 +45,6 @@ function create_harness() {
       search: new SearchStore(),
       tab: new TabStore(),
       git: new GitStore(),
-    graph: new GraphStore(),
       graph: new GraphStore(),
       outline: new OutlineStore(),
       split_view: new SplitViewStore(),
@@ -116,11 +116,12 @@ describe("register_terminal_actions", () => {
     await registry.execute(ACTION_IDS.terminal_new_session);
 
     expect(terminal_service.create_session).toHaveBeenCalled();
-    const call_args = (terminal_service.create_session as any).mock.calls[0][0];
+    const mock_call = vi.mocked(terminal_service.create_session).mock.calls[0];
+    const call_args = mock_call ? mock_call[0] : null;
     expect(call_args).toBeDefined();
-    expect(call_args.shell_path).toBeDefined();
-    expect(call_args.cols).toBe(80);
-    expect(call_args.rows).toBe(24);
+    expect(call_args?.shell_path).toBeDefined();
+    expect(call_args?.cols).toBe(80);
+    expect(call_args?.rows).toBe(24);
   });
 
   it("activates and respawns a specific session", async () => {

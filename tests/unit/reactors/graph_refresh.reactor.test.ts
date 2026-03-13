@@ -58,7 +58,7 @@ describe("resolve_graph_refresh_decision", () => {
     const state = {
       ...initial_state,
       last_panel_open: true,
-      last_index_status: "running" as const,
+      last_index_status: "indexing" as const,
       last_vault_id: "vault-1",
     };
 
