@@ -123,6 +123,14 @@ fn fts_schema_needs_migration(conn: &Connection) -> bool {
     }
 }
 
+fn tasks_schema_needs_migration(conn: &Connection) -> bool {
+    let sql = "SELECT sql FROM sqlite_master WHERE type='table' AND name='tasks'";
+    match conn.query_row(sql, [], |row| row.get::<_, String>(0)) {
+        Ok(ddl) => !ddl.contains("status TEXT"),
+        Err(_) => false,
+    }
+}
+
 fn init_schema(conn: &Connection) -> Result<(), String> {
     if fts_schema_needs_migration(conn) {
         conn.execute_batch(
@@ -131,6 +139,11 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
              DELETE FROM outlinks;",
         )
         .map_err(|e| e.to_string())?;
+    }
+
+    if tasks_schema_needs_migration(conn) {
+        conn.execute("DROP TABLE IF EXISTS tasks", [])
+            .map_err(|e| e.to_string())?;
     }
 
     conn.execute_batch(&format!(
