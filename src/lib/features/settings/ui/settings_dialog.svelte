@@ -17,6 +17,7 @@
   import KeyboardIcon from "@lucide/svelte/icons/keyboard";
   import { HotkeysPanel } from "$lib/features/hotkey";
   import ThemeSettings from "$lib/features/settings/ui/theme_settings.svelte";
+  import IgnoredFoldersInput from "$lib/features/settings/ui/ignored_folders_input.svelte";
   import type {
     AiDefaultBackend,
     DocumentImageBackground,
@@ -35,6 +36,7 @@
   type Props = {
     open: boolean;
     editor_settings: EditorSettings;
+    folder_paths: string[];
     git_enabled: boolean;
     git_remote_url: string;
     active_category: SettingsCategory;
@@ -64,6 +66,7 @@
   let {
     open,
     editor_settings,
+    folder_paths,
     git_enabled,
     git_remote_url,
     active_category,
@@ -681,20 +684,13 @@
                   <code>.vaultignore</code> and <code>.gitignore</code>.
                 </span>
               </div>
-              <textarea
-                class="SettingsDialog__textarea"
-                value={format_ignored_folders(editor_settings.ignored_folders)}
-                oninput={(
-                  e: Event & { currentTarget: HTMLTextAreaElement },
-                ) => {
-                  update(
-                    "ignored_folders",
-                    parse_ignored_folders(e.currentTarget.value),
-                  );
+              <IgnoredFoldersInput
+                value={editor_settings.ignored_folders}
+                {folder_paths}
+                on_change={(value) => {
+                  update("ignored_folders", value);
                 }}
-                rows="4"
-                placeholder={`node_modules\nbuild\npapers/raw`}
-              ></textarea>
+              />
             </div>
             <div class="SettingsDialog__row">
               <div class="SettingsDialog__label-group">
@@ -1490,23 +1486,6 @@
     font-size: var(--text-xs);
     color: var(--muted-foreground);
     line-height: 1.4;
-  }
-
-  .SettingsDialog__textarea {
-    width: 18rem;
-    min-height: 6rem;
-    resize: vertical;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--background);
-    padding: var(--space-2) var(--space-3);
-    font-size: var(--text-sm);
-    color: var(--foreground);
-  }
-
-  .SettingsDialog__textarea:focus {
-    outline: 2px solid var(--ring);
-    outline-offset: 1px;
   }
 
   .SettingsDialog__reset {
