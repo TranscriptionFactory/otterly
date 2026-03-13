@@ -8,6 +8,7 @@ export class TaskStore {
   filter = $state<TaskFilter>({});
   grouping = $state<TaskGrouping>('none');
   viewMode = $state<'list' | 'kanban' | 'schedule'>('list');
+  kanbanOrientation = $state<'horizontal' | 'vertical'>('horizontal');
   
   // Cache for tasks by note path
   noteTasks = new SvelteMap<string, Task[]>();
@@ -34,6 +35,10 @@ export class TaskStore {
 
   setViewMode(mode: 'list' | 'kanban' | 'schedule') {
     this.viewMode = mode;
+  }
+
+  setKanbanOrientation(orientation: 'horizontal' | 'vertical') {
+    this.kanbanOrientation = orientation;
   }
 
   setNoteTasks(path: string, tasks: Task[]) {
