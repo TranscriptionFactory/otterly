@@ -46,12 +46,6 @@ type RelatedNode = {
 
 const NODE_WIDTH = 176;
 const NODE_HEIGHT = 44;
-const CENTER_X = 372;
-const CENTER_Y = 184;
-const LEFT_X = 44;
-const RIGHT_X = 524;
-const TOP_Y = 28;
-const BOTTOM_Y = 336;
 const COLUMN_GAP = 60;
 
 function title_from_path(path: string): string {
@@ -200,6 +194,7 @@ export function resolve_graph_canvas_view(input: {
   filter_query: string;
   selected_node_ids: string[];
   hovered_node_id: string | null;
+  container_width?: number;
 }): GraphCanvasView {
   const query = input.filter_query.trim().toLocaleLowerCase();
   const selected = new Set(input.selected_node_ids);
@@ -213,11 +208,23 @@ export function resolve_graph_canvas_view(input: {
     matches_query(query, entry.target_path),
   );
 
+  const canvas_width = Math.max(input.container_width ?? 760, 400);
+  
+  // Adaptive coordinates based on width
+  const CENTER_X = Math.floor((canvas_width - NODE_WIDTH) / 2);
+  const LEFT_X = 24;
+  const RIGHT_X = canvas_width - NODE_WIDTH - 24;
+  
+  const TOP_Y = 28;
+  const CENTER_Y = 184;
+  const BOTTOM_Y = 336;
+
   const max_column_length = Math.max(
     backlinks.length,
     outlinks.length,
     bidirectional.length > 0 ? 1 : 0,
   );
+  
   const height = Math.max(
     460,
     BOTTOM_Y +
@@ -244,7 +251,7 @@ export function resolve_graph_canvas_view(input: {
   const top_nodes = layout_row(
     bidirectional,
     TOP_Y,
-    760,
+    canvas_width,
     (entry) => entry.note.path,
     (entry) => ({
       label: entry.note.title,
@@ -295,7 +302,7 @@ export function resolve_graph_canvas_view(input: {
   const orphan_nodes = layout_row(
     orphan_links,
     BOTTOM_Y,
-    760,
+    canvas_width,
     (entry) => entry.target_path,
     (entry) => ({
       id: entry.target_path,
@@ -319,7 +326,7 @@ export function resolve_graph_canvas_view(input: {
     .map((node) => edge_from_center(center, node));
 
   return {
-    width: 760,
+    width: canvas_width,
     height,
     nodes,
     edges,

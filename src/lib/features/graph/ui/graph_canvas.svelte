@@ -1,12 +1,13 @@
 <script lang="ts">
   import { resolve_graph_canvas_view } from "$lib/features/graph/domain/graph_canvas_view";
-  import type { GraphNeighborhoodSnapshot } from "$lib/features/graph/ports";
+  type { GraphNeighborhoodSnapshot } from "$lib/features/graph/ports";
 
   type Props = {
     snapshot: GraphNeighborhoodSnapshot;
     filter_query: string;
     selected_node_ids: string[];
     hovered_node_id: string | null;
+    container_width?: number;
     on_select_node: (node_id: string) => void;
     on_hover_node: (node_id: string | null) => void;
     on_open_existing_node: (path: string) => void;
@@ -18,6 +19,7 @@
     filter_query,
     selected_node_ids,
     hovered_node_id,
+    container_width,
     on_select_node,
     on_hover_node,
     on_open_existing_node,
@@ -30,6 +32,7 @@
       filter_query,
       selected_node_ids,
       hovered_node_id,
+      container_width,
     }),
   );
 
@@ -45,7 +48,7 @@
 
 <div
   class="GraphCanvas"
-  style={`height:${String(view.height)}px; width:${String(view.width)}px;`}
+  style={`height:${String(view.height)}px;`}
 >
   <svg
     class="GraphCanvas__edges"

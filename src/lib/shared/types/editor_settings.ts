@@ -58,8 +58,6 @@ export type EditorSettings = {
   document_code_wrap: boolean;
   document_image_background: DocumentImageBackground;
   document_inactive_cache_limit: number;
-  graph_panel_side: PanelSide;
-  tasks_panel_side: PanelSide;
 };
 
 export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
@@ -99,8 +97,6 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   document_code_wrap: true,
   document_image_background: "checkerboard",
   document_inactive_cache_limit: 3,
-  graph_panel_side: "right",
-  tasks_panel_side: "right",
 };
 
 export const SETTINGS_KEY = "editor" as const;
@@ -138,8 +134,6 @@ export const GLOBAL_ONLY_SETTING_KEYS: readonly (keyof EditorSettings)[] = [
   "document_code_wrap",
   "document_image_background",
   "document_inactive_cache_limit",
-  "graph_panel_side",
-  "tasks_panel_side",
 ] as const;
 
 const GLOBAL_ONLY_SET = new Set<string>(GLOBAL_ONLY_SETTING_KEYS);
