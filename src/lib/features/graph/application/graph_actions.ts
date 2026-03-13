@@ -101,7 +101,7 @@ export function register_graph_actions(
     id: ACTION_IDS.graph_set_filter_query,
     label: "Set Graph Filter Query",
     execute: (query: unknown) => {
-      graph_service.set_filter_query(String(query ?? ""));
+      graph_service.set_filter_query(typeof query === "string" ? query : "");
     },
   });
 }
