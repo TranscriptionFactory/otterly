@@ -12,6 +12,7 @@
   import Kanban from "@lucide/svelte/icons/kanban";
   import Calendar from "@lucide/svelte/icons/calendar";
   import Columns from "@lucide/svelte/icons/columns";
+  import Rows from "@lucide/svelte/icons/rows";
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { ACTION_IDS } from "$lib/app";
@@ -110,6 +111,22 @@
       </Button>
 
       <div class="flex items-center gap-1 text-[10px] text-muted-foreground">
+        {#if taskStore.viewMode === 'kanban'}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            class="h-5 w-5" 
+            onclick={() => taskStore.setKanbanOrientation(taskStore.kanbanOrientation === 'horizontal' ? 'vertical' : 'horizontal')}
+            title="Toggle Orientation ({taskStore.kanbanOrientation})"
+          >
+            {#if taskStore.kanbanOrientation === 'horizontal'}
+              <Rows size={10} />
+            {:else}
+              <Columns size={10} />
+            {/if}
+          </Button>
+          <div class="w-px h-3 bg-border mx-1"></div>
+        {/if}
         <Columns size={10} />
         <select 
           class="bg-transparent border-none focus:ring-0 text-[10px] cursor-pointer"

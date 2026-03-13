@@ -48,9 +48,9 @@
   });
 </script>
 
-<div class="flex gap-4 h-full overflow-x-auto pb-4 p-2">
+<div class="flex {taskStore.kanbanOrientation === 'horizontal' ? 'flex-row overflow-x-auto h-full pb-4' : 'flex-col overflow-y-auto h-full pr-4'} gap-4 p-2">
   {#each columns as column (column.id)}
-    <div class="flex-shrink-0 w-72 flex flex-col bg-muted/30 rounded-lg border">
+    <div class="flex-shrink-0 {taskStore.kanbanOrientation === 'horizontal' ? 'w-72 flex flex-col' : 'w-full flex flex-col'} bg-muted/30 rounded-lg border">
       <div class="p-3 border-b bg-muted/50 rounded-t-lg flex items-center justify-between">
         <h3 class="text-xs font-bold uppercase tracking-tight text-muted-foreground">
           {column.label}
@@ -60,7 +60,7 @@
         </span>
       </div>
       
-      <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
+      <div class="flex-1 {taskStore.kanbanOrientation === 'horizontal' ? 'overflow-y-auto' : ''} p-2 flex flex-col gap-2">
         {#each column.tasks as task (task.id)}
           <div class="bg-background border rounded-md shadow-sm">
             <TaskListItem {task} />
