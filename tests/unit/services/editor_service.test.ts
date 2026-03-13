@@ -313,6 +313,31 @@ describe("EditorService", () => {
     expect(editor_store.cursor).toEqual(cursor);
   });
 
+  it("updates selection state from session events", async () => {
+    const session = create_session("alpha");
+    const { service, editor_store, session_configs } = create_setup(() =>
+      Promise.resolve(session),
+    );
+    const root = {} as HTMLDivElement;
+    const note = create_open_note("docs/alpha.md", "# Alpha");
+    const selection: EditorSelectionSnapshot = {
+      text: "Alpha",
+      start: null,
+      end: null,
+    };
+
+    editor_store.set_open_note(note);
+    await service.mount({
+      root,
+      note,
+    });
+
+    const events = session_config_at(session_configs, 0).events;
+    events.on_selection_change?.(selection);
+
+    expect(editor_store.selection).toEqual(selection);
+  });
+
   it("dispatches internal link click via callbacks", async () => {
     const session = create_session("alpha");
     const { service, editor_store, callbacks, session_configs } = create_setup(

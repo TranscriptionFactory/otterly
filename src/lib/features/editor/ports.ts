@@ -41,6 +41,7 @@ export type EditorEventHandlers = {
   on_markdown_change: (markdown: string) => void;
   on_dirty_state_change: (is_dirty: boolean) => void;
   on_cursor_change?: (info: CursorInfo) => void;
+  on_selection_change?: (selection: EditorSelectionSnapshot | null) => void;
   on_internal_link_click?: (
     raw_path: string,
     base_note_path: string,

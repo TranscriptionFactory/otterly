@@ -24,6 +24,36 @@
   function start_session() {
     void action_registry.execute(ACTION_IDS.ai_open_assistant);
   }
+
+  $effect(() => {
+    if (!has_session || session.is_executing || session.result) {
+      return;
+    }
+
+    const current_note = stores.editor.open_note;
+    if (!current_note || session.context?.note_path !== current_note.meta.path) {
+      return;
+    }
+
+    const selection = stores.editor.selection;
+    const markdown = current_note.markdown;
+
+    if (
+      selection?.text === session.context?.selection?.text &&
+      markdown === session.context?.note_markdown
+    ) {
+      return;
+    }
+
+    // Update the context with latest editor state
+    void action_registry.execute(ACTION_IDS.ai_update_context, {
+      note_path: current_note.meta.path,
+      note_title: current_note.meta.title || current_note.meta.name,
+      note_markdown: markdown,
+      selection,
+      target: session.context?.target ?? "full_note",
+    });
+  });
 </script>
 
 {#if ai_disabled}

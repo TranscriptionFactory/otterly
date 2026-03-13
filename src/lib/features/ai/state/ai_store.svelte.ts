@@ -92,6 +92,24 @@ export class AiStore {
     this.dialog.cli_error = null;
   }
 
+  update_context(context: AiDialogContext) {
+    if (!this.dialog.open || !this.dialog.context) {
+      return;
+    }
+
+    // Keep the current target if it's still valid, otherwise use the new one
+    const next_target =
+      context.target === "selection" &&
+      (!context.selection || context.selection.text.trim() === "")
+        ? "full_note"
+        : context.target;
+
+    this.dialog.context = {
+      ...context,
+      target: next_target,
+    };
+  }
+
   set_target(target: "selection" | "full_note") {
     if (!this.dialog.context) {
       return;
