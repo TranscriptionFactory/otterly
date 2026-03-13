@@ -128,6 +128,8 @@ pub fn run() {
             features::search::service::resolve_wiki_link,
             features::bases::service::bases_list_properties,
             features::bases::service::bases_query,
+            features::bases::service::bases_save_view,
+            features::bases::service::bases_load_view,
             features::graph::service::graph_load_note_neighborhood,
             features::notes::service::list_notes,
             features::notes::service::list_folders,
