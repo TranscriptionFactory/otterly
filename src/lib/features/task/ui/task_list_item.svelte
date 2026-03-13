@@ -4,6 +4,7 @@
   import Calendar from "@lucide/svelte/icons/calendar";
   import FileText from "@lucide/svelte/icons/file-text";
   import Hash from "@lucide/svelte/icons/hash";
+  import { ACTION_IDS } from "$lib/app/action_registry/action_ids";
 
   let { task }: { task: Task } = $props();
   const context = use_app_context();
@@ -15,7 +16,7 @@
   }
 
   function openNote() {
-    actionRegistry.execute("note_open", { path: task.path });
+    actionRegistry.execute(ACTION_IDS.note_open, { note_path: task.path });
   }
 </script>
 

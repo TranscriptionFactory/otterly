@@ -19,7 +19,7 @@
   }
 
   function handle_note_click(path: string) {
-    void action_registry.execute(ACTION_IDS.note_open, { path });
+    void action_registry.execute(ACTION_IDS.note_open, { note_path: path });
   }
 </script>
 
