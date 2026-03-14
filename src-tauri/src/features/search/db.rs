@@ -51,7 +51,7 @@ pub fn extract_local_links_snapshot(markdown: &str, source_path: &str) -> LocalL
     link_parser::extract_local_links_snapshot(markdown, source_path)
 }
 
-pub(crate) fn list_markdown_files(
+pub(crate) fn list_indexable_files(
     app: Option<&tauri::AppHandle>,
     vault_id: &str,
     root: &Path,
@@ -71,7 +71,10 @@ pub(crate) fn list_markdown_files(
         })
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file())
-        .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("md"))
+        .filter(|e| {
+            let ext = e.path().extension().and_then(|x| x.to_str());
+            matches!(ext, Some("md") | Some("canvas") | Some("excalidraw"))
+        })
         .map(|e| e.path().to_path_buf())
         .collect();
     files.sort();
@@ -83,6 +86,31 @@ fn file_stem_string(abs: &Path) -> String {
         .and_then(|s| s.to_str())
         .unwrap_or_default()
         .to_string()
+}
+
+fn is_canvas_file(abs: &Path) -> bool {
+    let ext = abs.extension().and_then(|x| x.to_str()).unwrap_or("");
+    matches!(ext, "canvas" | "excalidraw")
+}
+
+fn extract_indexable_body(abs: &Path, raw: &str) -> String {
+    if is_canvas_file(abs) {
+        match crate::features::canvas::canvas_link_extractor::extract_canvas_content(raw) {
+            Ok(content) => content.text_body,
+            Err(_) => String::new(),
+        }
+    } else {
+        raw.to_string()
+    }
+}
+
+fn extract_link_targets(abs: &Path, raw: &str, source_path: &str) -> Vec<String> {
+    if is_canvas_file(abs) {
+        crate::features::canvas::canvas_link_extractor::extract_all_link_targets(raw)
+            .unwrap_or_default()
+    } else {
+        internal_link_targets(raw, source_path)
+    }
 }
 
 pub(crate) fn extract_meta(abs: &Path, vault_root: &Path) -> Result<IndexNoteMeta, String> {
@@ -492,7 +520,7 @@ pub fn rebuild_index(
     conn.execute("DELETE FROM outlinks", [])
         .map_err(|e| e.to_string())?;
 
-    let paths = list_markdown_files(app, vault_id, vault_root)?;
+    let paths = list_indexable_files(app, vault_id, vault_root)?;
     let total = paths.len();
     on_progress(0, total);
 
@@ -508,7 +536,7 @@ pub fn rebuild_index(
 
         for abs in batch {
             indexed += 1;
-            let markdown = match std::fs::read_to_string(abs) {
+            let raw = match std::fs::read_to_string(abs) {
                 Ok(s) => s,
                 Err(e) => {
                     log::warn!("skip {}: {}", abs.display(), e);
@@ -522,8 +550,9 @@ pub fn rebuild_index(
                     continue;
                 }
             };
-            upsert_note(conn, &meta, &markdown)?;
-            let targets = internal_link_targets(&markdown, &meta.path);
+            let body = extract_indexable_body(abs, &raw);
+            upsert_note(conn, &meta, &body)?;
+            let targets = extract_link_targets(abs, &raw, &meta.path);
             pending_links.push((meta.path.clone(), targets));
         }
 
@@ -546,7 +575,7 @@ pub fn sync_index(
     yield_fn: &mut dyn FnMut(),
 ) -> Result<IndexResult, String> {
     let manifest = get_manifest(conn).unwrap_or_default();
-    let disk_files = list_markdown_files(app, vault_id, vault_root)?;
+    let disk_files = list_indexable_files(app, vault_id, vault_root)?;
     let plan = compute_sync_plan(vault_root, &manifest, &disk_files);
 
     let change_count = plan.added.len() + plan.modified.len() + plan.removed.len();
@@ -608,7 +637,7 @@ pub fn sync_index(
 
         for abs in batch {
             indexed += 1;
-            let markdown = match std::fs::read_to_string(abs) {
+            let raw = match std::fs::read_to_string(abs) {
                 Ok(s) => s,
                 Err(e) => {
                     log::warn!("skip {}: {}", abs.display(), e);
@@ -622,8 +651,9 @@ pub fn sync_index(
                     continue;
                 }
             };
-            upsert_note(conn, &meta, &markdown)?;
-            let targets = internal_link_targets(&markdown, &meta.path);
+            let body = extract_indexable_body(abs, &raw);
+            upsert_note(conn, &meta, &body)?;
+            let targets = extract_link_targets(abs, &raw, &meta.path);
             pending_links.push((meta.path.clone(), targets));
         }
 
