@@ -1,6 +1,8 @@
 <script lang="ts">
   import { use_app_context } from "$lib/app/context/app_context.svelte";
   import type { CanvasTabState } from "$lib/features/canvas/state/canvas_store.svelte";
+  import type { Camera } from "$lib/features/canvas/types/canvas";
+  import CanvasSurface from "$lib/features/canvas/ui/canvas_surface.svelte";
 
   interface Props {
     tab_id: string;
@@ -15,8 +17,9 @@
     stores.canvas.get_state(tab_id),
   );
 
-  const node_count = $derived(canvas_state?.canvas_data?.nodes.length ?? 0);
-  const edge_count = $derived(canvas_state?.canvas_data?.edges.length ?? 0);
+  function handle_camera_change(camera: Camera) {
+    stores.canvas.set_camera(tab_id, camera);
+  }
 </script>
 
 <div class="CanvasViewer">
@@ -28,20 +31,12 @@
     <div class="CanvasViewer__state CanvasViewer__state--error">
       <span>{canvas_state.error_message ?? "Failed to load canvas"}</span>
     </div>
-  {:else if canvas_state?.status === "ready"}
-    <div class="CanvasViewer__placeholder">
-      <span class="CanvasViewer__file-type"
-        >{file_type === "excalidraw"
-          ? "Excalidraw Drawing"
-          : "JSON Canvas"}</span
-      >
-      <span class="CanvasViewer__file-path">{file_path}</span>
-      {#if file_type === "canvas"}
-        <span class="CanvasViewer__stats"
-          >{node_count} nodes · {edge_count} edges</span
-        >
-      {/if}
-    </div>
+  {:else if canvas_state?.status === "ready" && canvas_state.canvas_data}
+    <CanvasSurface
+      canvas_data={canvas_state.canvas_data}
+      camera={canvas_state.camera}
+      on_camera_change={handle_camera_change}
+    />
   {:else}
     <div class="CanvasViewer__state">
       <span>No canvas loaded</span>
@@ -68,30 +63,5 @@
 
   .CanvasViewer__state--error {
     color: var(--destructive);
-  }
-
-  .CanvasViewer__placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    gap: 0.5rem;
-  }
-
-  .CanvasViewer__file-type {
-    font-size: var(--text-lg);
-    font-weight: 600;
-    color: var(--foreground);
-  }
-
-  .CanvasViewer__file-path {
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-  }
-
-  .CanvasViewer__stats {
-    font-size: var(--text-xs);
-    color: var(--muted-foreground);
   }
 </style>
