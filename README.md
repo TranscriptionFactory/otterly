@@ -1,21 +1,5 @@
-<img src="./assets/icon.png" alt="Badgerly Carbide" width="150">
+<img src="./assets/badget_icon_nobackground2.png" alt="Badgerly Carbide" width="150">
 
-[![Release](https://github.com/TranscriptionFactory/badgerly/actions/workflows/release.yml/badge.svg)](https://github.com/TranscriptionFactory/badgerly/actions/workflows/release.yml)
-
-# Badgerly
-
-A local-first, privacy-focused markdown editor. No accounts, no cloud dependency, no sync fees — just a folder of markdown files you fully own.
-
-<p>
-  <img src="./assets/editor-screenshot.png" style="width: 49%; display: inline-block;">
-  <img src="./assets/editor-screenshot-light.png" style="width: 49%; display: inline-block;">
-</p>
-
-## Why Badgerly
-
-Most note-taking apps force a trade-off: either you get polished UX at the cost of cloud lock-in, or you stay local-first but deal with heavy Electron apps that eat your RAM and require constant plugin hunting.
-
-Badgerly is built with [Tauri](https://tauri.app/) and [Svelte 5](https://svelte.dev/). It's small, fast, and designed to stay out of your way. Your notes are plain markdown files in a folder you control. If you ever want to stop using Badgerly, your notes stay exactly where they are, ready to be opened in any other editor.
 
 ## Features
 
@@ -69,16 +53,11 @@ pnpm test       # Vitest unit tests
 pnpm format     # Prettier
 ```
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=TranscriptionFactory/badgerly&type=date&legend=top-left)](https://www.star-history.com/#TranscriptionFactory/badgerly&type=date&legend=top-left)
-
 ## Acknowledgments
 
-Badgerly is a fork of [Otterly](https://github.com/TranscriptionFactory/otterly). Thank you to the Otterly project for providing the foundation this project builds on.
+Badgerly is a fork of [Otterly]([https://github.com/TranscriptionFactory/otterly](https://github.com/ajkdrag/otterly)). Thank you to the Otterly project for providing the foundation this project builds on.
 
-Thanks also to [Ferrite](https://github.com/OlaProeis/Ferrite), [Moraya](https://github.com/TranscriptionFactory/moraya), [Scratch](https://github.com/TranscriptionFactory/scratch), and [Lokus](https://github.com/lokus-ai/lokus) for inspiration.
-
+Thanks also to [Ferrite](https://github.com/OlaProeis/Ferrite), [Moraya](https://github.com/TranscriptionFactory/moraya), [Scratch](https://github.com/erictli/scratch), and [Lokus](https://github.com/lokus-ai/lokus) for inspiration.
 ## License
 
 MIT - See [LICENSE](./LICENSE) for details.
