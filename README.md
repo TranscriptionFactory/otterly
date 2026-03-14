@@ -1,4 +1,4 @@
-<img src="./assets/badget_icon_nobackground2.png" alt="Badgerly Carbide" width="150">
+<img src="./assets/badger_icon_nobackground2.png" alt="Badgerly Carbide" width="150">
 
 
 ## Features
