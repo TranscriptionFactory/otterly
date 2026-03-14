@@ -131,7 +131,7 @@
     label: `${String(n)} px`,
   }));
 
-  const terminal_scrollback_options = [1000, 5000, 10000, 20000].map((n) => ({
+  const terminal_scrollback_options = [0, 1000, 5000, 10000].map((n) => ({
     value: String(n),
     label: n.toLocaleString(),
   }));
