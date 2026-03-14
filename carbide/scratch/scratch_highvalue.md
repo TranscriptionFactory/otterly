@@ -1,23 +1,23 @@
 # Scratch High-Value Cherry-Picks
 
-> Features adapted from [scratch](~/src/scratch/) into Otterly/Carbide.
+> Features adapted from [scratch](~/src/scratch/) into Badgerly/Carbide.
 > Status: `[ ]` pending | `[~]` in progress | `[x]` done | `[-]` dropped
 
 ---
 
 ## Existing State Assessment
 
-Before planning, here's what Otterly already has in each area:
+Before planning, here's what Badgerly already has in each area:
 
-| Area                  | Otterly Status                                                                                                                                                                        | Scratch Offers                                                                                                       | Verdict                                                                                                               |
+| Area                  | Badgerly Status                                                                                                                                                                       | Scratch Offers                                                                                                       | Verdict                                                                                                               |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Search**            | SQLite FTS5 with BM25 ranking, scoped search (title/path/content/all), snippet extraction, incremental indexing                                                                       | Tantivy with prefix fallback, scored results                                                                         | **SKIP** — Otterly's FTS5 is already comparable. Tantivy would be a lateral move, not an upgrade                      |
+| **Search**            | SQLite FTS5 with BM25 ranking, scoped search (title/path/content/all), snippet extraction, incremental indexing                                                                       | Tantivy with prefix fallback, scored results                                                                         | **SKIP** — Badgerly's FTS5 is already comparable. Tantivy would be a lateral move, not an upgrade                     |
 | **Git remote**        | git2: status, commit, log, diff, restore, tag, init. **No push/pull/fetch/remote**                                                                                                    | CLI-based push/pull/fetch with SSH timeouts, error parsing, remote add                                               | **ADOPT** — fills the biggest git gap                                                                                 |
 | **Command palette**   | Sophisticated omnibar with 12 commands, note search, cross-vault, scopes                                                                                                              | Combined commands + Tantivy search, contextual commands (git-only, note-only)                                        | **ENHANCE** — add contextual command registration pattern                                                             |
 | **AI CLI**            | Does not exist                                                                                                                                                                        | Claude/Codex/Ollama CLI execution, provider detection, 5min timeout, ANSI stripping                                  | **ADOPT** — new capability                                                                                            |
 | **Focus/zen mode**    | Does not exist                                                                                                                                                                        | Boolean toggle, sidebar slide-out animation, Escape to exit                                                          | **ADOPT** — trivial to implement                                                                                      |
 | **Editor typography** | font_family_sans/mono, font_size, line_height, heading_font_weight. **No editor_width**                                                                                               | font family map, editor width presets (narrow/normal/wide/full), bold weight, line height                            | **ENHANCE** — add editor width presets                                                                                |
-| **Wikilinks**         | Full implementation: `wiki_link_plugin.ts` (converter + click handler), `wiki_suggest_plugin.ts` (autocomplete), `open_wiki_link` action, search suggestions via `suggest_wiki_links` | TipTap Node extension with `[[]]` tokenizer, suggestion list                                                         | **SKIP** — Otterly's Milkdown-based implementation is already more mature                                             |
+| **Wikilinks**         | Full implementation: `wiki_link_plugin.ts` (converter + click handler), `wiki_suggest_plugin.ts` (autocomplete), `open_wiki_link` action, search suggestions via `suggest_wiki_links` | TipTap Node extension with `[[]]` tokenizer, suggestion list                                                         | **SKIP** — Badgerly's Milkdown-based implementation is already more mature                                            |
 | **Math/LaTeX**        | Does not exist                                                                                                                                                                        | TipTap `@tiptap/extension-mathematics` with KaTeX, block math `$$...$$` input rule, keyboard-accessible editor popup | **ADOPT** — new capability. Use `@milkdown/plugin-math` (native Milkdown support) instead of porting TipTap extension |
 
 ---
@@ -30,7 +30,7 @@ Before planning, here's what Otterly already has in each area:
 
 ### What to build
 
-Otterly uses `git2` crate (libgit2 bindings). Scratch uses CLI `git` commands. We'll implement with git2 for consistency with existing Otterly git code, but borrow Scratch's error categorization and timeout patterns.
+Badgerly uses `git2` crate (libgit2 bindings). Scratch uses CLI `git` commands. We'll implement with git2 for consistency with existing Badgerly git code, but borrow Scratch's error categorization and timeout patterns.
 
 ### Rust Backend (`src-tauri/src/features/git/service.rs`)
 
@@ -156,7 +156,7 @@ Scratch source: `~/src/scratch/src-tauri/src/lib.rs` (lines 2070-2540), `~/src/s
 
 ### What to build
 
-Otterly's omnibar already combines commands + search. What Scratch adds: **contextual command visibility** — commands that only appear when relevant (e.g., git commands only when repo exists, note-specific commands only when a note is open).
+Badgerly's omnibar already combines commands + search. What Scratch adds: **contextual command visibility** — commands that only appear when relevant (e.g., git commands only when repo exists, note-specific commands only when a note is open).
 
 ### Design
 
@@ -191,7 +191,7 @@ interface CommandContext {
   - Git+remote: "Git Fetch"
   - AI: "AI Edit (Claude)" etc. (only when CLI detected)
   - Split-view: "Close Split", "Focus Left Pane", "Focus Right Pane"
-- [ ] Add recent commands section (Otterly's omnibar already tracks `recent_commands` in UIStore)
+- [ ] Add recent commands section (Badgerly's omnibar already tracks `recent_commands` in UIStore)
 
 ### Testing
 
@@ -257,7 +257,7 @@ Editor Max Width setting with UI controls and reset button in settings dialog. I
 
 ### What to build
 
-Inline (`$expr$`) and block (`$$expr$$`) math rendering with KaTeX. Otterly uses Milkdown (ProseMirror-based), not TipTap, so we use `@milkdown/plugin-math` instead of porting Scratch's TipTap extension. The Milkdown plugin provides native `$$` input rules, ProseMirror node definitions, and KaTeX rendering out of the box.
+Inline (`$expr$`) and block (`$$expr$$`) math rendering with KaTeX. Badgerly uses Milkdown (ProseMirror-based), not TipTap, so we use `@milkdown/plugin-math` instead of porting Scratch's TipTap extension. The Milkdown plugin provides native `$$` input rules, ProseMirror node definitions, and KaTeX rendering out of the box.
 
 ### What transfers from Scratch
 
@@ -419,7 +419,7 @@ Features 1, 3, 6, 7 all need floating positioning. Extract a reusable pattern fi
 - [x] Clicking language label opens `createLanguagePicker()` — pure DOM, searchable, grouped (Popular/All)
 - [x] Language select: dispatch `tr.setNodeMarkup(pos, undefined, { ...attrs, language: newLang })`
 - [ ] Auto-detect language: lazy-load `hljs`, use `highlightAuto()`, show as suggestion with relevance > 5 threshold (defer to v2)
-- [x] Drop moraya's renderer plugin references (Otterly doesn't have that system)
+- [x] Drop moraya's renderer plugin references (Badgerly doesn't have that system)
 
 #### Tests
 

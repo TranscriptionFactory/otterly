@@ -1,6 +1,6 @@
 # Brainstorming: Git-Friendly Database & Settings Sync
 
-This document explores strategies to make Carbide's internal storage (`search.db` and `.otterly` files) more robust for synchronization via Git, especially across multiple machines.
+This document explores strategies to make Carbide's internal storage (`search.db` and `.badgerly` files) more robust for synchronization via Git, especially across multiple machines.
 
 ## Current Problem
 
@@ -14,7 +14,7 @@ This document explores strategies to make Carbide's internal storage (`search.db
 
 Since `search.db` is entirely derived from the Markdown files in the vault, it can be treated as a cache rather than primary source of truth.
 
-- **Approach**: Add `.otterly/search.db` to `.gitignore`.
+- **Approach**: Add `.badgerly/search.db` to `.gitignore`.
 - **Pros**: Zero merge conflicts; smaller repository size; no binary diffs.
 - **Cons**: Initial indexing delay on a new machine; search is unavailable until indexing completes.
 - **Mitigation**: Optimize indexing speed (multi-threaded, incremental) so the delay is negligible for small-to-medium vaults.
@@ -42,12 +42,12 @@ Bridge the gap between SQLite performance and Git friendliness by using a text r
 
 Separate settings that should be synced from those that should stay local to a machine.
 
-- **Shared State (`.otterly/vault_settings.json`)**:
+- **Shared State (`.badgerly/vault_settings.json`)**:
   - Starred paths
   - Folder-specific icons/colors
   - Plugin configurations
   - Excluded folders
-- **Local State (`.otterly/local_state.json` - Git-ignored)**:
+- **Local State (`.badgerly/local_state.json` - Git-ignored)**:
   - Open tabs
   - Active tab / cursor position
   - Recent files list
@@ -56,11 +56,11 @@ Separate settings that should be synced from those that should stay local to a m
 
 ---
 
-## Review of Current Implementation (Otterly)
+## Review of Current Implementation (Badgerly)
 
 ### 1. Indexing Triggers
 
-- **On Vault Open**: Otterly triggers a `sync_index` operation when a vault is opened or switched.
+- **On Vault Open**: Badgerly triggers a `sync_index` operation when a vault is opened or switched.
 - **Reactive (Watcher)**: A file watcher (`WatcherService`) monitors the filesystem. When a `.md` file is added, removed, or changed, it emits an event.
 - **Debounced Reconciliation**: The `watcher.reactor` listens to these events and schedules a `reconcile_workspace` task with `sync_index: true`, debounced by **300ms**. This ensures the index stays up-to-date without overwhelming the CPU during heavy file operations.
 

@@ -1,4 +1,4 @@
-# Implementation Plan: Porting Ferrite Rust Logic to Carbide/Otterly
+# Implementation Plan: Porting Ferrite Rust Logic to Carbide/Badgerly
 
 ## Goal
 
@@ -59,12 +59,12 @@ Improve Carbide's data integrity, performance with large files, and architectura
 
 - **Objective:** Ensure professional OS integration.
 - **Tasks:**
-  - [x] Adapt Ferrite's `single_instance.rs` to Otterly's `main.rs` (Implemented via `tauri-plugin-single-instance`).
+  - [x] Adapt Ferrite's `single_instance.rs` to Badgerly's `main.rs` (Implemented via `tauri-plugin-single-instance`).
   - [x] On launch: check for a named pipe/socket.
   - [x] If exists: send CLI arguments (file paths) to the socket and exit.
   - [x] If not: start the socket listener and the app.
 - **Verification:** Second instance launch now forwards file paths to the primary instance.
-- **Verification:** Open Otterly, then double-click an `.md` file in Finder; verify it opens as a new tab in the existing window.
+- **Verification:** Open Badgerly, then double-click an `.md` file in Finder; verify it opens as a new tab in the existing window.
 
 ## Success Criteria
 

@@ -1,12 +1,12 @@
 # Carbide: Revised Project Guide (v2)
 
-## Strategy: Fork Otterly, Borrow from Moraya
+## Strategy: Fork Badgerly, Borrow from Moraya
 
 Building from scratch is a multi-month time sink during a PhD. The faster path:
 
-## otterly-carbide ecosystem guardrails
+## badgerly-carbide ecosystem guardrails
 
-The otterly-carbide fork should treat the following as non-negotiable compatibility constraints for fitting into the broader Markdown knowledge-work ecosystem:
+The badgerly-carbide fork should treat the following as non-negotiable compatibility constraints for fitting into the broader Markdown knowledge-work ecosystem:
 
 - Notes stay on disk as Obsidian-flavored Markdown. Rich editing can use any frontend or internal representation during editing, but storage stays Markdown and table UX should come from a WYSIWYG table editing helper rather than a proprietary format.
 - JSON Canvas must remain on the roadmap as a storage format, even if the editor uses a different transient model at runtime.
@@ -16,13 +16,13 @@ The otterly-carbide fork should treat the following as non-negotiable compatibil
 - Vault scope stays fixed to a single vault root. We should not expand scope by combining separate vaults through a shared parent folder.
 - Optional compatibility roadmap items include cross-platform support, P2P sync/collaboration, secondary YAML metadata, metadata views (graph/base/orphans/homonyms), and icon-enhanced links or file explorer affordances.
 
-1. **Fork Otterly** as the foundation — it already has the vault model, file tree, Tauri v2 + Milkdown stack, local-first `.md` storage, image paste-to-assets, **git integration (git2 crate with full UI)**, **multiple vault support**, and **resizable split panes**. This gives us most of the core for free.
-2. **Study Moraya's codebase** for specific features Otterly lacks — Moraya has working implementations of: outline view, macOS default-app file associations, and PDF export. Extract the architectural patterns and adapt them into the Otterly fork.
-3. **Build the genuinely novel pieces ourselves** — plugin system, terminal panel, PDF _viewing_ (not just export), and document-level split view (Otterly's split is layout panes, not side-by-side docs).
+1. **Fork Badgerly** as the foundation — it already has the vault model, file tree, Tauri v2 + Milkdown stack, local-first `.md` storage, image paste-to-assets, **git integration (git2 crate with full UI)**, **multiple vault support**, and **resizable split panes**. This gives us most of the core for free.
+2. **Study Moraya's codebase** for specific features Badgerly lacks — Moraya has working implementations of: outline view, macOS default-app file associations, and PDF export. Extract the architectural patterns and adapt them into the Badgerly fork.
+3. **Build the genuinely novel pieces ourselves** — plugin system, terminal panel, PDF _viewing_ (not just export), and document-level split view (Badgerly's split is layout panes, not side-by-side docs).
 
-Both repos are forked locally at `/Users/abir/src/otterly` and `/Users/abir/src/moraya`.
+Both repos are forked locally at `/Users/abir/src/badgerly` and `/Users/abir/src/moraya`.
 
-### What Otterly Already Has (Day 1)
+### What Badgerly Already Has (Day 1)
 
 - Tauri v2 + Milkdown WYSIWYG markdown editor
 
@@ -46,7 +46,7 @@ Both repos are forked locally at `/Users/abir/src/otterly` and `/Users/abir/src/
 
 - **Outline view** — Moraya has `OutlinePanel.svelte`: extracts headings from editor state, renders hierarchy with indentation, highlights active heading, debounced live updates. We adapt this for Milkdown's ProseMirror state (Moraya also uses ProseMirror, so the heading extraction logic translates directly).
 
-- **macOS default app registration** — Moraya's `tauri.conf.json` declares `fileAssociations` for `.md`, `.markdown`, `.mdx`, `.txt` with MIME types and editor role. Its `lib.rs` handles `file://` scheme open events. We replicate this pattern in the Otterly fork.
+- **macOS default app registration** — Moraya's `tauri.conf.json` declares `fileAssociations` for `.md`, `.markdown`, `.mdx`, `.txt` with MIME types and editor role. Its `lib.rs` handles `file://` scheme open events. We replicate this pattern in the Badgerly fork.
 
 - **PDF export** — Moraya uses `jsPDF` to export editor content as multi-page PDF. We take this as a starting point and extend it to PDF _viewing_ (which neither project has).
 
@@ -54,17 +54,17 @@ Both repos are forked locally at `/Users/abir/src/otterly` and `/Users/abir/src/
 
 These features don't exist in either project:
 
-1. **Vault switcher dropdown** — Otterly has a vault picker dialog; Carbide adds a Moraya-style dropdown in the sidebar header for fast vault switching. (Future: simultaneous multi-vault sidebar with all vaults as collapsible root nodes.)
-2. **Document-level split view** — open two different files side by side (Otterly has resizable panes but they're fixed to file-tree | editor | links, not two editors)
+1. **Vault switcher dropdown** — Badgerly has a vault picker dialog; Carbide adds a Moraya-style dropdown in the sidebar header for fast vault switching. (Future: simultaneous multi-vault sidebar with all vaults as collapsible root nodes.)
+2. **Document-level split view** — open two different files side by side (Badgerly has resizable panes but they're fixed to file-tree | editor | links, not two editors)
 3. **Terminal panel** — embedded PTY terminal
 4. **In-app document viewer** — render PDFs, images, CSVs, and other non-markdown files directly in the editor area (not just export). Neither project has a viewer for non-markdown content.
 5. **Plugin system** — the long-term differentiator
 
-### What Otterly Already Has That We Enhance
+### What Badgerly Already Has That We Enhance
 
-- **Git integration** — Otterly has commit/status/diff/history/restore. We add: push/pull with SSH auth, auto-commit option (on-save / interval), and a more prominent status bar widget.
+- **Git integration** — Badgerly has commit/status/diff/history/restore. We add: push/pull with SSH auth, auto-commit option (on-save / interval), and a more prominent status bar widget.
 
-- **Multiple vaults** — Otterly supports multiple vaults with a picker dialog. We add a quick-access dropdown switcher in the sidebar header (Moraya-style). Simultaneous multi-vault sidebar deferred to future.
+- **Multiple vaults** — Badgerly supports multiple vaults with a picker dialog. We add a quick-access dropdown switcher in the sidebar header (Moraya-style). Simultaneous multi-vault sidebar deferred to future.
 
 ---
 
@@ -85,20 +85,20 @@ codesign -d --entitlements - /Applications/Octarine.app
 
 ## Part 2: The Project Prompt
 
-Use this prompt with Claude to bootstrap Carbide from the Otterly fork.
+Use this prompt with Claude to bootstrap Carbide from the Badgerly fork.
 
 ---
 
 ```text
 I'm building "Carbide" — a high-performance, local-first markdown note-taking app
-with a plugin system. I'm forking Otterly (Tauri v2 + Milkdown vault editor) as my
-starting point. The fork is at /Users/abir/src/otterly. I also have Moraya forked
+with a plugin system. I'm forking Badgerly (Tauri v2 + Milkdown vault editor) as my
+starting point. The fork is at /Users/abir/src/badgerly. I also have Moraya forked
 at /Users/abir/src/moraya for reference.
 
 My background: computational biology PhD student. Heavy LaTeX, git workflows, multi-year
 vault. Comfortable with Rust. I want to move fast by building on existing open-source work.
 
-## What Otterly Already Provides (DO NOT REBUILD)
+## What Badgerly Already Provides (DO NOT REBUILD)
 - Tauri v2 (Rust backend + system webview)
 - Milkdown editor (ProseMirror-based WYSIWYG markdown)
 - Vault model (open folder, file tree, file operations)
@@ -113,7 +113,7 @@ vault. Comfortable with Rust. I want to move fast by building on existing open-s
 ### Tier 1 — Core UX (make it a daily driver)
 
 **1. Vault Switcher Dropdown** [Adapt from Moraya's dropdown pattern]
-Otterly has vault switching but via a picker dialog. Carbide adds a quick-access
+Badgerly has vault switching but via a picker dialog. Carbide adds a quick-access
 dropdown in the sidebar header (like Moraya's knowledge base switcher):
 - Dropdown in sidebar header showing current vault name + chevron
 - Lists all known vaults (pinned first, then by recency)
@@ -141,23 +141,23 @@ rearchitecting the single-vault assumption throughout the codebase.
 - If outside any vault → standalone single-file mode
 - Drag-and-drop .md files onto dock icon
 
-**4. Document Split View** [New — extends Otterly's existing pane system]
+**4. Document Split View** [New — extends Badgerly's existing pane system]
 - Cmd+\ to split the editor area into two independent editor instances
 - Each pane can open a different file from the same vault
-- Otterly already has Resizable.PaneGroup infrastructure — extend it to support
+- Badgerly already has Resizable.PaneGroup infrastructure — extend it to support
   multiple editor panes within the center area
 - Drag tab to split, drag back to merge
 - Max 2-3 panes
 
 ### Tier 2 — Power Features
 
-**5. Git Enhancements** [Extend Otterly's existing git2 integration]
-Otterly already has: git_status, git_stage_and_commit, git_log, git_diff,
+**5. Git Enhancements** [Extend Badgerly's existing git2 integration]
+Badgerly already has: git_status, git_stage_and_commit, git_log, git_diff,
 git_show_file_at_commit, git_restore_file, git_create_tag, git_init_repo.
 We add:
 - Push/pull support (detect remote, SSH key auth via ssh2 crate or git2's SSH transport)
 - Auto-commit option (configurable: off, on-save, every N minutes)
-- More prominent status bar git widget (Otterly's exists but may need polish)
+- More prominent status bar git widget (Badgerly's exists but may need polish)
 
 **6. Terminal Panel** [Use existing plugin — don't build from scratch]
 - **Use [`tauri-plugin-pty`](https://github.com/Tnze/tauri-plugin-pty)** — a Tauri 2-native PTY plugin
@@ -204,7 +204,7 @@ Open non-markdown files directly in the editor area instead of launching externa
 
 ## What I Need Right Now
 
-### Step 1: Audit Otterly
+### Step 1: Audit Badgerly
 - Get it building locally with `cargo tauri dev`
 - Audit: document current architecture, Rust modules, frontend components,
   Tauri command surface
@@ -218,7 +218,7 @@ ARCHITECTURE.md covering:
 - Frontend modules to add: vault switcher dropdown, outline panel, split-view editor,
   terminal, document viewer (PDF/image/CSV/code), plugin bridge
 - New Tauri commands
-- How each module hooks into Otterly's existing code (minimal invasive changes)
+- How each module hooks into Badgerly's existing code (minimal invasive changes)
 - Plugin API TypeScript interfaces
 
 ### Step 3: Implement Tier 1 features (one PR per feature)
@@ -233,9 +233,9 @@ Start with the audit. Don't write application code yet.
 ### Prompt 2: Vault Switcher Dropdown
 
 ```text
-Add a Moraya-style vault switcher dropdown to Otterly's sidebar.
+Add a Moraya-style vault switcher dropdown to Badgerly's sidebar.
 
-Current state: Otterly shows one vault at a time. Switching requires opening the
+Current state: Badgerly shows one vault at a time. Switching requires opening the
 vault picker dialog. The vault management code is in src/lib/features/vault/ and
 the sidebar layout is in workspace_layout.svelte.
 
@@ -266,13 +266,13 @@ and click to switch instantly. No dialog needed for the common case.
 ### Prompt 3: Outline View
 
 ```text
-Implement the outline view on the Otterly fork.
+Implement the outline view on the Badgerly fork.
 
 Reference implementation: Moraya's OutlinePanel.svelte at /Users/abir/src/moraya.
 It extracts headings from ProseMirror editor state, renders them as an indented
 hierarchy with active heading highlighting, and debounces updates.
 
-In Otterly:
+In Badgerly:
 - Add a new panel to the right sidebar (alongside the existing Links tab)
 - Extract heading nodes from Milkdown's ProseMirror doc state
 - Render as nested clickable list, click → scroll to heading
@@ -291,14 +291,14 @@ Implement macOS default app registration and document split view.
 
 1. macOS Default App:
    Reference: Moraya's tauri.conf.json fileAssociations and lib.rs file:// handling.
-   - Add fileAssociations for .md, .markdown, .mdx to Otterly's tauri.conf.json
+   - Add fileAssociations for .md, .markdown, .mdx to Badgerly's tauri.conf.json
    - Handle file-open events in Rust backend
    - If file is in a known vault → open vault + navigate to file
    - If outside → standalone single-file mode
    - Test: right-click .md in Finder → Open With → Carbide
 
 2. Document Split View:
-   Otterly already uses Resizable.PaneGroup (in workspace_layout.svelte) for its
+   Badgerly already uses Resizable.PaneGroup (in workspace_layout.svelte) for its
    3-pane layout. Extend the center editor pane to support multiple editor instances:
    - Cmd+\ to split, each pane opens a different file
    - Shared vault context (file tree, git status)
@@ -311,9 +311,9 @@ Result: I can open .md files from Finder. I can view two documents side by side.
 ### Prompt 5: Git Enhancements
 
 ```text
-Extend Otterly's existing git integration with push/pull and auto-commit.
+Extend Badgerly's existing git integration with push/pull and auto-commit.
 
-Otterly already has in src-tauri/src/features/git/service.rs:
+Badgerly already has in src-tauri/src/features/git/service.rs:
 - git_has_repo, git_init_repo, git_status, git_stage_and_commit
 - git_create_tag, git_log, git_diff, git_show_file_at_commit, git_restore_file
 
@@ -377,7 +377,7 @@ Frontend:
 
 Integration:
 - Add terminal pane below the existing editor area in workspace_layout.svelte
-- Use Otterly's existing Resizable.PaneGroup pattern for the vertical split
+- Use Badgerly's existing Resizable.PaneGroup pattern for the vertical split
 
 Result: I can toggle a terminal, run scripts, use git CLI, activate conda envs —
 all inside Carbide.
@@ -458,16 +458,16 @@ drop it in .carbide/plugins/, and it loads on restart.
 
 ## Development Timeline (Realistic for PhD Student)
 
-| Phase | Features                                        | Est. Effort | Milestone                                   |
-| ----- | ----------------------------------------------- | ----------- | ------------------------------------------- |
-| 0     | Audit Otterly, get building, rebrand to Carbide | 1 weekend   | `cargo tauri dev` works                     |
-| 1     | Vault switcher dropdown                         | 3–5 days    | Fast vault switching from sidebar           |
-| 2     | Outline view                                    | 3–5 days    | Heading navigation while editing            |
-| 3     | Default app + Document split view               | 1–2 weeks   | Open .md from Finder, two docs side by side |
-| 4     | Git push/pull + auto-commit                     | 1 week      | Full git workflow without leaving app       |
-| 5     | Terminal panel                                  | 1–2 weeks   | No more window-switching for scripts        |
-| 6     | In-app document viewer (PDF, images, CSV, code) | 2–3 weeks   | View any file type without leaving app      |
-| 7     | Plugin system                                   | 3–4 weeks   | Extensibility unlocked                      |
+| Phase | Features                                         | Est. Effort | Milestone                                   |
+| ----- | ------------------------------------------------ | ----------- | ------------------------------------------- |
+| 0     | Audit Badgerly, get building, rebrand to Carbide | 1 weekend   | `cargo tauri dev` works                     |
+| 1     | Vault switcher dropdown                          | 3–5 days    | Fast vault switching from sidebar           |
+| 2     | Outline view                                     | 3–5 days    | Heading navigation while editing            |
+| 3     | Default app + Document split view                | 1–2 weeks   | Open .md from Finder, two docs side by side |
+| 4     | Git push/pull + auto-commit                      | 1 week      | Full git workflow without leaving app       |
+| 5     | Terminal panel                                   | 1–2 weeks   | No more window-switching for scripts        |
+| 6     | In-app document viewer (PDF, images, CSV, code)  | 2–3 weeks   | View any file type without leaving app      |
+| 7     | Plugin system                                    | 3–4 weeks   | Extensibility unlocked                      |
 
 **Total: \~9–14 weeks of part-time work.**
 
@@ -475,11 +475,11 @@ Phase 1 (vault switcher dropdown) is now a lightweight UI addition — no archit
 
 ## Editor Framework Note
 
-Otterly already uses **Milkdown** (ProseMirror-based, markdown-native WYSIWYG). This is the right choice — don't switch. Milkdown's plugin architecture aligns with our plugin system goals, and it has existing plugins for LaTeX (`@milkdown/plugin-math`) and code blocks that we can enable immediately.
+Badgerly already uses **Milkdown** (ProseMirror-based, markdown-native WYSIWYG). This is the right choice — don't switch. Milkdown's plugin architecture aligns with our plugin system goals, and it has existing plugins for LaTeX (`@milkdown/plugin-math`) and code blocks that we can enable immediately.
 
 ## Codebase Reference
 
-### Otterly Key Paths (`/Users/abir/src/otterly`)
+### Badgerly Key Paths (`/Users/abir/src/badgerly`)
 
 - **Rust backend**: `src-tauri/src/features/git/service.rs` (8+ git commands)
 

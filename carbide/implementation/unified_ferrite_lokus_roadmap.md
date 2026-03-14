@@ -1,6 +1,6 @@
 # Carbide Implementation Roadmap: Delta Plan for Performance, Functionality, and Security
 
-This roadmap is the working execution plan for Carbide on top of Otterly.
+This roadmap is the working execution plan for Carbide on top of Badgerly.
 
 It is a delta plan, not a greenfield wishlist. It starts from what Carbide already has, then prioritizes the next highest-leverage work.
 
@@ -8,7 +8,7 @@ If older documents under `carbide/` conflict with current implementation reality
 
 ## Non-negotiables
 
-- **Otterly architecture stays intact.** New work must follow the existing Ports/Adapters, Stores, Services, Reactors, and Action Registry model from `docs/architecture.md`.
+- **Badgerly architecture stays intact.** New work must follow the existing Ports/Adapters, Stores, Services, Reactors, and Action Registry model from `docs/architecture.md`.
 - **Functionality and security beat plan consistency.** We are not obligated to preserve older plan shapes if they are stale, low-value, or unsafe.
 - **Lokus is a product and UX donor, not an implementation base.** Borrow concepts, data-flow shapes, and successful interactions. Do not transplant its React runtime or workspace assumptions.
 - **Use the revised donor rules from `carbide/research/lokus_portability_reassessment.md`.** Graph internals, Bases semantics, customization breadth, and task UX are valid donors. Lokus plugin runtime, command-execution exposure, calendar sync stack, and workspace bootstrap model are not.
@@ -58,7 +58,7 @@ These are baseline capabilities. Future work should harden or extend them, not p
 
 ## Execution rules for every new feature
 
-Every roadmap item must be implemented as a first-class Otterly feature slice or an explicit extension of an existing slice.
+Every roadmap item must be implemented as a first-class Badgerly feature slice or an explicit extension of an existing slice.
 
 A feature is not portable just because Lokus ships it. Before borrowing from Lokus, classify the donor as one of:
 
@@ -106,7 +106,7 @@ Goal: lock down execution boundaries and performance invariants before expanding
 
 - No new feature ships with ambient shell, PTY, or filesystem power.
 - Permission-denied, malformed-input, and lifecycle-cleanup cases are tested explicitly.
-- All new architecture is expressed in Otterly-native slices and boundaries.
+- All new architecture is expressed in Badgerly-native slices and boundaries.
 
 ### Phase 1: Improve existing foundations and ship visible wins
 
@@ -118,7 +118,7 @@ The terminal is not “done”. It is a useful v1 that now needs to become robus
 
 ##### Priorities
 
-- Keep Otterly's terminal as the base. Do not import terminal or command-runtime patterns from Lokus.
+- Keep Badgerly's terminal as the base. Do not import terminal or command-runtime patterns from Lokus.
 - Move from a single terminal session model to a multi-session model.
 - Add tabs first. Add tiling only if the session model stays clean.
 - Define explicit session ownership for cwd, shell, focus, lifecycle, and persistence.
@@ -172,7 +172,7 @@ Goal: ship a native graph feature early, without waiting for full Bases maturity
 
 ##### Priorities
 
-- Build a native `graph` slice in Otterly.
+- Build a native `graph` slice in Badgerly.
 - Use `src/core/graph/GraphDataProcessor.js` as the main Lokus donor for build stages, batch processing, and incremental file-content updates.
 - Treat `src/features/graph/hooks/useGraphEngine.js` and graph state in `src/stores/editorGroups.js` as anti-patterns for ownership, not patterns to copy.
 - Use the existing link-resolution and links-store foundations for the first graph data model.
@@ -281,7 +281,7 @@ Goal: ship a functional infinite canvas MVP that supports both Excalidraw drawin
 
 ##### Priorities
 
-- Build a native `canvas` slice in Otterly.
+- Build a native `canvas` slice in Badgerly.
 - Use JSON Canvas as the storage format for spatial note boards.
 - Support Excalidraw-only canvas support for now as the drawing experience.
 - Ensure canvas references (note links, image embeds) are rename-safe.
@@ -291,13 +291,13 @@ Goal: ship a functional infinite canvas MVP that supports both Excalidraw drawin
 
 - Users can create, edit, and arrange notes on an infinite canvas.
 - Users can create and edit Excalidraw drawings.
-- The canvas implementation follows the Otterly slice architecture and security boundaries.
+- The canvas implementation follows the Badgerly slice architecture and security boundaries.
 
 ## Base-switch threshold
 
 Lokus should only become the implementation base if Carbide deliberately changes strategy to prefer raw feature breadth over:
 
-- Otterly's architecture rules
+- Badgerly's architecture rules
 - strict plugin and command security boundaries
 - explicit vault and state ownership
 - replay cost for already-landed Carbide work
@@ -318,7 +318,7 @@ These are intentionally downstream:
 
 The priority is not to imitate Lokus or Ferrite mechanically.
 
-The priority is to make Carbide meaningfully better on top of Otterly by:
+The priority is to make Carbide meaningfully better on top of Badgerly by:
 
 - hardening existing capabilities that already matter
 - shipping visible customization and graph wins early

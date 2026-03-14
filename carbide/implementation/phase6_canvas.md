@@ -40,14 +40,16 @@ HTML nodes with CSS `transform` for text/file/link/group nodes. SVG overlay for 
 
 ### D2 — Excalidraw bundling (review #18)
 
-Vendor Excalidraw as a separate Vite entrypoint, built into a standalone HTML+JS bundle. Serve via `otterly-excalidraw://` custom protocol (same pattern as `otterly-plugin://`). No CDN — desktop app, must work offline.
+Vendor Excalidraw as a separate Vite entrypoint, built into a standalone HTML+JS bundle. Serve via `badgerly-excalidraw://` custom protocol (same pattern as `badgerly-plugin://`). No CDN — desktop app, must work offline.
 
 **Build pipeline:**
+
 - New Vite config at `src/excalidraw/vite.config.ts` producing a single `index.html` + JS bundle.
 - Output directory: `src-tauri/excalidraw-dist/`. Registered as a Tauri custom protocol in `app/mod.rs`.
 - Build step added to the main build script (`pnpm build:excalidraw`).
 
 **postMessage bridge (stateful):**
+
 - `init_scene { scene }` — Host sends initial Excalidraw scene data on iframe load.
 - `update_scene { elements, appState }` — Host pushes external changes (theme sync, programmatic edits).
 - `on_change { elements, appState }` — Excalidraw sends diffs back on every change.
@@ -55,6 +57,7 @@ Vendor Excalidraw as a separate Vite entrypoint, built into a standalone HTML+JS
 - `theme_sync { theme }` — Host pushes theme changes.
 
 **Save coordination:**
+
 - Host owns the save timer (debounced, same pattern as note autosave).
 - Excalidraw sends `dirty: true` flag with `on_change` events.
 - Before save, host sends `get_scene`, waits for `scene_response`, then writes to disk.
@@ -67,6 +70,7 @@ Canvas store includes `camera: { x: number, y: number, zoom: number }`.
 **Persistence:** Sidecar file at `.carbide/canvas_meta/<filename>.json`. Not stored in the `.canvas` file — keeps the spec-compliant file clean of app-specific state.
 
 **Format:**
+
 ```json
 { "camera": { "x": 0, "y": 0, "zoom": 1 } }
 ```
@@ -132,6 +136,7 @@ No network access. All Excalidraw assets (fonts, icons) are bundled in the Vite 
 **Pre-work before Phase 6 milestones.** Extract a generic `SandboxedIframe` component from `plugin_iframe_host.svelte` into `src/lib/shared/ui/sandboxed_iframe.svelte`.
 
 **`SandboxedIframe` responsibilities:**
+
 - Iframe element binding and `bind:this` exposure.
 - Origin-scoped `message` event handling: filters by `event.origin` and `event.source`.
 - `post_message(message)` method scoped to the iframe's origin.
@@ -139,7 +144,8 @@ No network access. All Excalidraw assets (fonts, icons) are bundled in the Vite 
 - Cleanup on destroy (remove event listeners).
 
 **Consumers:**
-- `PluginIframeHost` composes `SandboxedIframe`, adds plugin-specific command dispatch and `otterly:plugin-command` event handling.
+
+- `PluginIframeHost` composes `SandboxedIframe`, adds plugin-specific command dispatch and `badgerly:plugin-command` event handling.
 - `ExcalidrawHost` composes `SandboxedIframe`, adds the Excalidraw-specific postMessage bridge (init scene, onChange, get scene, theme sync).
 
 ## Canvas slice architecture
@@ -208,7 +214,7 @@ src/excalidraw/
 1. `DocumentViewer` identifies a `.canvas` or `.excalidraw` file.
 2. `CanvasService` loads the file content through `CanvasPort`.
 3. For `.canvas`: `canvas_parser.ts` validates and deserializes. Store is hydrated. `JsonCanvasRenderer` mounts with viewport restored from sidecar.
-4. For `.excalidraw`: `ExcalidrawHost` mounts, loads the iframe via `otterly-excalidraw://`, sends `init_scene` via postMessage bridge.
+4. For `.excalidraw`: `ExcalidrawHost` mounts, loads the iframe via `badgerly-excalidraw://`, sends `init_scene` via postMessage bridge.
 
 ### Update path
 
@@ -227,6 +233,7 @@ src/excalidraw/
 ### Frontend composition root
 
 Update:
+
 - `src/lib/app/bootstrap/create_app_stores.ts` — add `CanvasStore`
 - `src/lib/app/di/app_ports.ts` — add `CanvasPort`
 - `src/lib/app/create_prod_ports.ts` — add `CanvasTauriAdapter`
@@ -240,7 +247,7 @@ Update:
 
 ### Rust registration
 
-- Register `otterly-excalidraw://` custom protocol in `app/mod.rs`.
+- Register `badgerly-excalidraw://` custom protocol in `app/mod.rs`.
 - Register canvas indexer commands for search integration.
 
 ## Milestones
@@ -250,6 +257,7 @@ Update:
 **Scope:** Extract `SandboxedIframe` from `plugin_iframe_host.svelte`. Update `PluginIframeHost` to compose it. Verify no plugin regressions.
 
 **Files:**
+
 - Create: `src/lib/shared/ui/sandboxed_iframe.svelte`
 - Modify: `src/lib/features/plugin/ui/plugin_iframe_host.svelte`
 
@@ -264,6 +272,7 @@ Update:
 **Scope:** Establish the canvas feature slice. Implement JSON Canvas parsing/serialization. Wire creation flow. Register file types in document viewer.
 
 **Files to create:**
+
 - `src/lib/features/canvas/index.ts`
 - `src/lib/features/canvas/ports.ts`
 - `src/lib/features/canvas/state/canvas_store.svelte.ts` (includes `camera` state)
@@ -276,6 +285,7 @@ Update:
 - `src/lib/features/canvas/ui/canvas_viewer.svelte`
 
 **Files to modify:**
+
 - `src/lib/app/bootstrap/create_app_stores.ts`
 - `src/lib/app/di/app_ports.ts`
 - `src/lib/app/create_prod_ports.ts`
@@ -283,6 +293,7 @@ Update:
 - `src/lib/features/document/ui/document_viewer.svelte`
 
 **Tests:**
+
 - `tests/unit/domain/canvas_parser.test.ts` — parse valid canvas, reject malformed, preserve unknown fields, warn on unknown node types.
 - `tests/unit/stores/canvas_store.test.ts` — node/edge CRUD, camera state, dirty tracking.
 - `tests/unit/services/canvas_service.test.ts` — create canvas, create drawing, load/save round-trip.
@@ -296,6 +307,7 @@ Update:
 **Scope:** Build the interactive JSON Canvas renderer with pan/zoom, node rendering, edge rendering, and viewport persistence.
 
 **Files to create:**
+
 - `src/lib/features/canvas/ui/json_canvas_renderer.svelte`
 - `src/lib/features/canvas/ui/nodes/canvas_text_node.svelte`
 - `src/lib/features/canvas/ui/nodes/canvas_file_node.svelte`
@@ -305,6 +317,7 @@ Update:
 - `src/lib/features/canvas/domain/viewport_math.ts`
 
 **Behavior:**
+
 - Viewport: mouse wheel zooms, middle-click or space+drag pans. CSS `transform` on the container.
 - Nodes: absolutely positioned divs. Click to select, drag to move, corner handles to resize.
 - Edges: SVG bezier paths. Connection sides determine anchor points.
@@ -313,6 +326,7 @@ Update:
 - Camera state persists to `.carbide/canvas_meta/<filename>.json` on close and debounced viewport changes. Restored on re-open.
 
 **Tests:**
+
 - `tests/unit/domain/viewport_math.test.ts` — screen-to-canvas transforms, zoom clamping, pan bounds.
 - `tests/unit/services/canvas_service.test.ts` — camera persistence save/load round-trip.
 
@@ -325,6 +339,7 @@ Update:
 **Scope:** Bundle Excalidraw, serve via custom protocol, implement the postMessage bridge, wire save coordination.
 
 **Files to create:**
+
 - `src/excalidraw/vite.config.ts`
 - `src/excalidraw/index.html`
 - `src/excalidraw/main.tsx`
@@ -332,26 +347,29 @@ Update:
 - `src/lib/features/canvas/ui/excalidraw_host.svelte`
 
 **Files to modify:**
-- `src-tauri/src/app/mod.rs` — register `otterly-excalidraw://` custom protocol.
+
+- `src-tauri/src/app/mod.rs` — register `badgerly-excalidraw://` custom protocol.
 - `package.json` — add `build:excalidraw` script.
 
 **Bridge protocol:**
 
-| Direction | Message | Payload |
-|-----------|---------|---------|
-| Host → Excalidraw | `init_scene` | `{ scene }` |
-| Host → Excalidraw | `update_scene` | `{ elements, appState }` |
-| Host → Excalidraw | `get_scene` | `{}` |
-| Host → Excalidraw | `theme_sync` | `{ theme: "light" \| "dark" }` |
-| Excalidraw → Host | `on_change` | `{ elements, appState, dirty }` |
-| Excalidraw → Host | `scene_response` | `{ scene }` |
+| Direction         | Message          | Payload                         |
+| ----------------- | ---------------- | ------------------------------- |
+| Host → Excalidraw | `init_scene`     | `{ scene }`                     |
+| Host → Excalidraw | `update_scene`   | `{ elements, appState }`        |
+| Host → Excalidraw | `get_scene`      | `{}`                            |
+| Host → Excalidraw | `theme_sync`     | `{ theme: "light" \| "dark" }`  |
+| Excalidraw → Host | `on_change`      | `{ elements, appState, dirty }` |
+| Excalidraw → Host | `scene_response` | `{ scene }`                     |
 
 **Save coordination:**
+
 - Host debounces saves (same interval as note autosave).
 - On save trigger: host sends `get_scene`, awaits `scene_response`, writes file.
 - `save_generation` counter discards stale responses.
 
 **Tests:**
+
 - `tests/unit/services/excalidraw_bridge.test.ts` — message serialization, save generation guard, dirty tracking.
 
 **Done when:** Users can create and edit `.excalidraw` files. Drawings persist across sessions. Theme syncs with the app theme.
@@ -363,22 +381,26 @@ Update:
 **Scope:** Index canvas content for search. Extract links for backlinks. Ensure rename-safety for note references inside canvas files.
 
 **Files to create:**
+
 - `src-tauri/src/features/canvas/mod.rs`
 - `src-tauri/src/features/canvas/canvas_indexer.rs`
 - `src-tauri/src/features/canvas/canvas_link_extractor.rs`
 - Canvas reactor: `src/lib/reactors/canvas.reactor.svelte.ts`
 
 **Files to modify:**
+
 - `src-tauri/src/app/mod.rs` — register canvas commands.
 - `src-tauri/src/features/search/` — add `canvas_text` source type to search DB schema.
 
 **Behavior:**
+
 - `canvas_indexer.rs` parses `.canvas` files, extracts text content from text-type nodes, inserts into the search index with `canvas_text` source type.
 - `canvas_link_extractor.rs` extracts `file` references from file-type nodes and wiki-links from text-type node content (reuses existing wiki-link regex).
 - Extracted links feed into `LinksStore` as outgoing links. Canvas files appear in backlinks panels.
 - Canvas reactor watches note rename events. On rename, scans `.canvas` files for matching `file` references and text-node wiki-links, rewrites them, saves.
 
 **Tests:**
+
 - `tests/unit/db/canvas_indexer.test.ts` — full-text extraction from text nodes.
 - `tests/unit/domain/canvas_link_extractor.test.ts` — file ref extraction, wiki-link extraction from text content.
 - `tests/unit/reactors/canvas_reactor.test.ts` — rename rewrite: file references updated, non-matching references untouched.

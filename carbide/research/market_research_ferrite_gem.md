@@ -1,59 +1,59 @@
-# Ferrite Assessment for Carbide/Otterly
+# Ferrite Assessment for Carbide/Badgerly
 
 ## Scope
 
-This document compares `Ferrite` and `Otterly` to identify features, architectural patterns, and code components that could be valuable to port to Carbide, improving long-term viability, extensibility, and security.
+This document compares `Ferrite` and `Badgerly` to identify features, architectural patterns, and code components that could be valuable to port to Carbide, improving long-term viability, extensibility, and security.
 
 ## Executive Summary
 
-Ferrite is a native Rust text editor built with `egui`, `ropey`, and `syntect`. Unlike Lokus (React) or Otterly (SvelteKit/Tauri), Ferrite is entirely native. While the UI components (`egui`) are not directly portable to Otterly's webview, Ferrite's robust Rust backend patterns for file handling, large file management, and terminal architecture offer strong inspiration for improving Otterly's Tauri backend.
+Ferrite is a native Rust text editor built with `egui`, `ropey`, and `syntect`. Unlike Lokus (React) or Badgerly (SvelteKit/Tauri), Ferrite is entirely native. While the UI components (`egui`) are not directly portable to Badgerly's webview, Ferrite's robust Rust backend patterns for file handling, large file management, and terminal architecture offer strong inspiration for improving Badgerly's Tauri backend.
 
-## Valuable Concepts to Port to Otterly
+## Valuable Concepts to Port to Badgerly
 
 ### 1. Robust File Encoding & Detection
 
 **Ferrite:** Uses `encoding_rs` and `chardetng` to auto-detect file encodings (UTF-8, Latin-1, Shift-JIS, etc.) and gracefully fallback.
-**Otterly:** Currently assumes UTF-8 for reading/writing Markdown. If a user drops in legacy text files or CSVs from other systems, Otterly could corrupt them or crash.
-**Recommendation:** Adopt Ferrite's `chardetng` encoding detection in Otterly's Rust `read_vault_file` command. This significantly improves long-term viability and data safety for diverse file vaults.
+**Badgerly:** Currently assumes UTF-8 for reading/writing Markdown. If a user drops in legacy text files or CSVs from other systems, Badgerly could corrupt them or crash.
+**Recommendation:** Adopt Ferrite's `chardetng` encoding detection in Badgerly's Rust `read_vault_file` command. This significantly improves long-term viability and data safety for diverse file vaults.
 
 ### 2. Large File Handling (Rope Data Structure)
 
 **Ferrite:** Uses `ropey` (a rope data structure) to handle 80MB+ text files with ~80MB RAM usage and virtually zero latency.
-**Otterly:** Uses Milkdown/ProseMirror or CodeMirror (for the Document Viewer). Very large files (e.g., a 10MB CSV or log file) will cause massive JSON serialization overhead over Tauri IPC and block the frontend thread.
-**Recommendation:** For the Phase 7 "Code/Text Viewer", Otterly could implement a Rust-based `ropey` buffer that only streams the visible chunk of text to the frontend over IPC, enabling instant opening of massive log/data files without front-end memory bloat.
+**Badgerly:** Uses Milkdown/ProseMirror or CodeMirror (for the Document Viewer). Very large files (e.g., a 10MB CSV or log file) will cause massive JSON serialization overhead over Tauri IPC and block the frontend thread.
+**Recommendation:** For the Phase 7 "Code/Text Viewer", Badgerly could implement a Rust-based `ropey` buffer that only streams the visible chunk of text to the frontend over IPC, enabling instant opening of massive log/data files without front-end memory bloat.
 
 ### 3. "Live Pipeline" Shell Commands
 
 **Ferrite:** Allows piping JSON/YAML content through shell commands.
-**Otterly:** Phase 6d introduces AI CLI Integration (Claude, Codex).
-**Recommendation:** Ferrite's generic pipeline architecture is a more extensible pattern than hardcoding specific AI CLIs. By treating AI tools as just another "pipeline command" with a text buffer stdin/stdout, Otterly can easily support any local CLI tool (e.g., `jq`, `awk`, custom LLM wrappers) securely without adding new Tauri commands per tool.
+**Badgerly:** Phase 6d introduces AI CLI Integration (Claude, Codex).
+**Recommendation:** Ferrite's generic pipeline architecture is a more extensible pattern than hardcoding specific AI CLIs. By treating AI tools as just another "pipeline command" with a text buffer stdin/stdout, Badgerly can easily support any local CLI tool (e.g., `jq`, `awk`, custom LLM wrappers) securely without adding new Tauri commands per tool.
 
 ### 4. Advanced Terminal Layouts
 
 **Ferrite:** Features a full tiling & splitting terminal workspace that saves/restores layouts to JSON.
-**Otterly:** Phase 6 introduces a basic `TerminalPanel`.
+**Badgerly:** Phase 6 introduces a basic `TerminalPanel`.
 **Recommendation:** Don't port the layout engine to Svelte right away, but borrow Ferrite's configuration JSON schema for terminal persistence and multiple session management.
 
 ### 5. Single Instance Management
 
 **Ferrite:** Contains explicit `single_instance.rs` logic to handle IPC when a user tries to open a second file from the OS explorer.
-**Otterly:** Phase 3 (macOS Default App Registration) requires similar logic.
-**Recommendation:** Review Ferrite's `single_instance.rs` to ensure Otterly's file-open events handle cross-process communication correctly (so clicking an `.md` file in Finder forwards the path to the running Otterly instance instead of launching a second Tauri app).
+**Badgerly:** Phase 3 (macOS Default App Registration) requires similar logic.
+**Recommendation:** Review Ferrite's `single_instance.rs` to ensure Badgerly's file-open events handle cross-process communication correctly (so clicking an `.md` file in Finder forwards the path to the running Badgerly instance instead of launching a second Tauri app).
 
 ### 6. Safe Auto-Save & Temp Files
 
 **Ferrite:** Writes to a temporary file first, then atomically renames to the target filename to prevent corruption during crash/power loss.
-**Otterly:** Standard file writes via `std::fs::write` are vulnerable to tearing.
-**Recommendation:** High-value security/safety win. Port the atomic write pattern (write to `.tmp`, then `rename`) to Otterly's `NoteService` and `VaultService`.
+**Badgerly:** Standard file writes via `std::fs::write` are vulnerable to tearing.
+**Recommendation:** High-value security/safety win. Port the atomic write pattern (write to `.tmp`, then `rename`) to Badgerly's `NoteService` and `VaultService`.
 
 ## Portability Matrix
 
 | Feature                    | Classification           | Notes                                                                                                                                                        |
 | :------------------------- | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **a. Encoding Detection**  | **Direct Port (Rust)**   | High portability. Uses standard Rust crates (`encoding_rs`, `chardetng`) that integrate directly into Otterly's Tauri backend.                               |
+| **a. Encoding Detection**  | **Direct Port (Rust)**   | High portability. Uses standard Rust crates (`encoding_rs`, `chardetng`) that integrate directly into Badgerly's Tauri backend.                              |
 | **b. Large File Handling** | **Architecture Donor**   | Moderate portability. The `ropey` buffer is easy to add to Rust, but the "windowed streaming" to the frontend requires a new Tauri command and Svelte logic. |
 | **c. Live Pipeline**       | **Direct Port (Rust)**   | High portability. The process spawning and stdin/stdout piping logic is pure Rust and framework-agnostic.                                                    |
-| **d. Terminal Layouts**    | **Product Design Donor** | Low code portability. Ferrite uses a custom Rust layout engine for `egui`. Otterly uses Svelte. Borrow the JSON schema, but rewrite the UI logic.            |
+| **d. Terminal Layouts**    | **Product Design Donor** | Low code portability. Ferrite uses a custom Rust layout engine for `egui`. Badgerly uses Svelte. Borrow the JSON schema, but rewrite the UI logic.           |
 | **e. Single Instance**     | **Direct Port (Rust)**   | High portability. The IPC logic for detecting a running instance and forwarding CLI args is standard Rust/OS integration.                                    |
 | **f. Atomic File Writes**  | **Direct Port (Rust)**   | High portability. Standard filesystem operation that should be implemented across all Carbide file writers.                                                  |
 
@@ -61,24 +61,24 @@ Ferrite is a native Rust text editor built with `egui`, `ropey`, and `syntect`. 
 
 While Lokus serves as a great **Product/UI donor** (Graph, Bases, Deep UI themes), Ferrite serves as an excellent **Backend/System donor**. Ferrite's focus on text correctness (Rope buffers, atomic saves, encoding detection) addresses exactly the blind spots inherent in web-first Tauri apps.
 
-## How Rust Ports Improve Otterly
+## How Rust Ports Improve Badgerly
 
-Porting the Rust-native logic from **Ferrite** to **Otterly** would solve several "blind spots" inherent in web-first Tauri applications.
+Porting the Rust-native logic from **Ferrite** to **Badgerly** would solve several "blind spots" inherent in web-first Tauri applications.
 
 ### 1. Data Integrity & Safety (Atomic Writes)
 
-- **Today's Risk:** Otterly currently writes files directly. If the app crashes, the computer loses power, or a sync tool (like Dropbox/iCloud) conflicts during a write, the file can be "torn" or corrupted.
-- **The Improvement:** By porting Ferrite's **Atomic Save** pattern, Otterly would write to a `.tmp` file first and then use a syscall to `rename` it to the final destination. This ensures the note is either 100% saved or 100% original, with no state in between. This is critical for "local-first" knowledge integrity.
+- **Today's Risk:** Badgerly currently writes files directly. If the app crashes, the computer loses power, or a sync tool (like Dropbox/iCloud) conflicts during a write, the file can be "torn" or corrupted.
+- **The Improvement:** By porting Ferrite's **Atomic Save** pattern, Badgerly would write to a `.tmp` file first and then use a syscall to `rename` it to the final destination. This ensures the note is either 100% saved or 100% original, with no state in between. This is critical for "local-first" knowledge integrity.
 
 ### 2. Handling "Real-World" Data (Encoding Detection)
 
-- **Today's Risk:** Otterly assumes everything is UTF-8. If a user imports legacy notes, CSV exports from old Windows systems (Latin-1), or Japanese Shift-JIS files, Otterly may display "mojibake" (garbage text) or potentially corrupt the file upon saving.
-- **The Improvement:** Porting the `chardetng` and `encoding_rs` integration allows Otterly to **auto-detect and preserve** the original encoding. This makes Carbide a viable tool for professionals moving existing data into their vaults.
+- **Today's Risk:** Badgerly assumes everything is UTF-8. If a user imports legacy notes, CSV exports from old Windows systems (Latin-1), or Japanese Shift-JIS files, Badgerly may display "mojibake" (garbage text) or potentially corrupt the file upon saving.
+- **The Improvement:** Porting the `chardetng` and `encoding_rs` integration allows Badgerly to **auto-detect and preserve** the original encoding. This makes Carbide a viable tool for professionals moving existing data into their vaults.
 
 ### 3. Solving the Tauri IPC Bottleneck (Rope Buffers)
 
 - **Today's Risk:** Passing a 50MB log file or CSV from Rust to the Svelte frontend as a single JSON string will freeze the UI thread and consume massive amounts of RAM during serialization.
-- **The Improvement:** By using a **Rope data structure (`ropey`)** in Rust, Otterly can implement "windowed" reading. Instead of sending the whole file, the Rust backend only sends the specific chunk of text (e.g., lines 1,000 to 1,100) that the user is currently viewing. This allows Otterly to open gigabyte-sized files instantly with near-zero memory footprint.
+- **The Improvement:** By using a **Rope data structure (`ropey`)** in Rust, Badgerly can implement "windowed" reading. Instead of sending the whole file, the Rust backend only sends the specific chunk of text (e.g., lines 1,000 to 1,100) that the user is currently viewing. This allows Badgerly to open gigabyte-sized files instantly with near-zero memory footprint.
 
 ### 4. Architectural Extensibility (The "Pipeline" Pattern)
 

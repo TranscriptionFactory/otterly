@@ -7,7 +7,7 @@ Implement Phase {{PHASE_NUMBER}} of Carbide.
 - Project guide: carbide/carbide-project-guide.md
 - TODO tracker: carbide/TODO.md
 - Phase history: carbide/archive/phase\_{{PHASE_NUMBER}}.md
-- This is a fork of Otterly (Tauri v2 + Milkdown markdown editor)
+- This is a fork of Badgerly (Tauri v2 + Milkdown markdown editor)
 - Moraya (/Users/abir/src/moraya) is a reference codebase for adapted features
 
 ## Instructions
@@ -27,7 +27,7 @@ Implement Phase {{PHASE_NUMBER}} of Carbide.
    plan or implementation notes into `carbide/archive/phase_{{PHASE_NUMBER}}.md`.
 
 4. Implement the phase:
-   - Follow Otterly's existing architecture when appropriate (ports & adapters, layered services,
+   - Follow Badgerly's existing architecture when appropriate (ports & adapters, layered services,
      action registry, Svelte 5 stores); note, architecture changes will be necessary at later points
    - Use the same file/folder conventions (snake_case, feature modules)
    - Prefer extending existing code over creating parallel structures

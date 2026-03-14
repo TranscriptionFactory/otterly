@@ -92,4 +92,4 @@ If cross-device sync ever enters scope, study these:
 
 ## 7. Bottom Line
 
-OctoBase solves a different problem (collaborative CRDT database) for a different product shape (block-based editor). Carbide should continue treating Markdown files as the source of truth, SQLite as a derived index, and the existing Otterly architecture as the implementation base. OctoBase joins the reference shelf alongside Lokus and Ferrite — to be studied selectively, not ported.
+OctoBase solves a different problem (collaborative CRDT database) for a different product shape (block-based editor). Carbide should continue treating Markdown files as the source of truth, SQLite as a derived index, and the existing Badgerly architecture as the implementation base. OctoBase joins the reference shelf alongside Lokus and Ferrite — to be studied selectively, not ported.

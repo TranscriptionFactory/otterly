@@ -2,11 +2,11 @@
 
 This document revises the earlier Lokus assessment after direct source inspection of `~/src/lokus` and after the rewrite of `carbide/implementation/unified_ferrite_lokus_roadmap.md`.
 
-The goal is not to decide whether Lokus is impressive. It is. The goal is to decide what Carbide should actually borrow, what should only inform design, and whether Lokus should ever replace Otterly as the implementation base.
+The goal is not to decide whether Lokus is impressive. It is. The goal is to decide what Carbide should actually borrow, what should only inform design, and whether Lokus should ever replace Badgerly as the implementation base.
 
 ## Bottom line
 
-- Keep Otterly as the implementation base.
+- Keep Badgerly as the implementation base.
 - Keep Lokus as a donor.
 - Borrow slightly more from Lokus than earlier assessments suggested, but mostly as design and data-flow input, not as code.
 - Do not port Lokus's plugin runtime or security model.
@@ -90,7 +90,7 @@ What is worth borrowing:
 
 Why this matters:
 
-Lokus has a concrete, inspectable Bases stack. It is not just a UI concept. Carbide should reuse its useful semantics while rebuilding the implementation inside Otterly-native slices.
+Lokus has a concrete, inspectable Bases stack. It is not just a UI concept. Carbide should reuse its useful semantics while rebuilding the implementation inside Badgerly-native slices.
 
 What not to borrow:
 
@@ -114,7 +114,7 @@ What is worth borrowing:
 
 Why this matters:
 
-This is still one of the best short-term wins for Carbide. It is visible, differentiating, and mostly compatible with Otterly's current theme and settings architecture.
+This is still one of the best short-term wins for Carbide. It is visible, differentiating, and mostly compatible with Badgerly's current theme and settings architecture.
 
 What not to borrow:
 
@@ -360,7 +360,7 @@ Specifically:
 
 That does not change the implementation strategy. It just sharpens what counts as a useful donor.
 
-## Should Lokus ever replace Otterly as the base?
+## Should Lokus ever replace Badgerly as the base?
 
 Not under the current Carbide strategy.
 
@@ -380,7 +380,7 @@ Switching to Lokus only makes sense if Carbide explicitly changes strategy to:
 - optimize for maximum feature surface immediately
 - accept broader coupling and global state
 - accept a looser plugin and command security posture
-- deprioritize Otterly's architectural rules
+- deprioritize Badgerly's architectural rules
 
 That is not the strategy reflected in the current roadmap. So the answer is no.
 

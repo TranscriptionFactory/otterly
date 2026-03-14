@@ -1,6 +1,6 @@
 # Phase 1 Implementation: Visual Customization
 
-This document turns the roadmap's "deep visual customization" goal into an implementation plan that fits Otterly's current settings, theme, and reactor architecture.
+This document turns the roadmap's "deep visual customization" goal into an implementation plan that fits Badgerly's current settings, theme, and reactor architecture.
 
 ## Goal
 

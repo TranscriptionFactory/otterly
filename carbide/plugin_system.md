@@ -91,7 +91,7 @@ Design with Obsidian-like vocabulary for easy porting:
 - `settings.register(settingsTab)`
 - `metadata.getFileCache(path)` — frontmatter, links, headings, tags
 
-### Mapping to Current Otterly Architecture
+### Mapping to Current Badgerly Architecture
 
 Follow the existing app decision tree and composition root instead of inventing a parallel runtime.
 

@@ -22,7 +22,7 @@ Review of `phase5_plugin_host_implementation.md` (Plugin Host) and `phase6_canva
 
 ### Security gaps
 
-7. **Iframe origin validation is TODO.** `plugin_iframe_host.svelte:27-28` has a commented-out origin check. The custom `otterly-plugin://` protocol must be registered as a Tauri custom protocol. Without it the postMessage bridge has no origin verification.
+7. **Iframe origin validation is TODO.** `plugin_iframe_host.svelte:27-28` has a commented-out origin check. The custom `badgerly-plugin://` protocol must be registered as a Tauri custom protocol. Without it the postMessage bridge has no origin verification.
 
 8. **`postMessage(message, "*")` is too permissive.** `plugin_iframe_host.svelte:61` sends to wildcard origin. Must be scoped to the plugin iframe's origin once the custom protocol is in place.
 

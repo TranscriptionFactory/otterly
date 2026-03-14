@@ -4,7 +4,7 @@ This document defines the first native Carbide graph implementation.
 
 ## Goal
 
-Ship a useful graph MVP early without waiting for full Bases maturity, while keeping the implementation aligned with Otterly's slice architecture.
+Ship a useful graph MVP early without waiting for full Bases maturity, while keeping the implementation aligned with Badgerly's slice architecture.
 
 ## What to borrow from Lokus
 

@@ -4,12 +4,12 @@
 
 - make Markdown links portable and standards-aligned
 - keep authoring simple for nested folders
-- preserve Otterly conveniences where they do not corrupt Markdown semantics
+- preserve Badgerly conveniences where they do not corrupt Markdown semantics
 - stage the rollout so we can ship improvements without a risky one-shot rewrite
 
-## otterly-carbide interoperability constraints
+## badgerly-carbide interoperability constraints
 
-- standard Markdown links keep standard Markdown path semantics; the extra suffix-index behavior applies to otterly-carbide native note-link resolution and rename repair flows
+- standard Markdown links keep standard Markdown path semantics; the extra suffix-index behavior applies to badgerly-carbide native note-link resolution and rename repair flows
 - native note-link lookup uses an alphanumerically sorted vault-path index and resolves targets by path suffix
 - renaming a note or folder must rewrite backlinks automatically
 - if adding or renaming a path creates a suffix homonym, existing links to the previously lowest-ranking homonym should be prefixed just enough to stay unique
@@ -29,7 +29,7 @@
 
 ### Wikilinks
 
-- `[[Foo]]`, `[[folder/Foo]]`, `[[Foo|Label]]` remain Otterly-native note references
+- `[[Foo]]`, `[[folder/Foo]]`, `[[Foo|Label]]` remain Badgerly-native note references
 - wikilink resolution remains app-defined
 - markdown-link behavior must not be overloaded with wikilink semantics
 

@@ -141,7 +141,7 @@ This keeps the implementation plugin-backed without letting a Svelte component o
 
 ## Terminal explicit decisions
 
-- Otterly's terminal stays the base
+- Badgerly's terminal stays the base
 - do not import terminal execution or shell exposure patterns from Lokus
 - plugins never get terminal access
 - command execution remains a separate system from the terminal

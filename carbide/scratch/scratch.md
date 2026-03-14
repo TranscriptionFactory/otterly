@@ -1,12 +1,12 @@
-# Scratch & Moraya: Portable Components for Otterly
+# Scratch & Moraya: Portable Components for Badgerly
 
-Reference document cataloging features from [scratch](~/src/scratch/) (React/Tauri/TipTap editor) and [moraya](~/src/moraya/) (Svelte/Tauri/ProseMirror editor) that can be ported to Otterly (SvelteKit/Tauri/Milkdown).
+Reference document cataloging features from [scratch](~/src/scratch/) (React/Tauri/TipTap editor) and [moraya](~/src/moraya/) (Svelte/Tauri/ProseMirror editor) that can be ported to Badgerly (SvelteKit/Tauri/Milkdown).
 
 ---
 
-## Otterly Editor Baseline
+## Badgerly Editor Baseline
 
-What Otterly already has:
+What Badgerly already has:
 
 - **Editor**: Milkdown 7.18.0 (ProseMirror-based), 807-line adapter
 - **Slash commands**: 13 commands (H1-H6, code block, table, bullet/ordered/task list, blockquote, divider)
@@ -42,14 +42,14 @@ Floating toolbar appears when cursor is in a table cell. Operations:
 - Delete row/column
 - Cell alignment: left, center, right
 
-Uses `prosemirror-tables` commands (`addRowBefore`, `addRowAfter`, `addColumnBefore`, `addColumnAfter`, `deleteRow`, `deleteColumn`). Otterly already has `prosemirror-tables` via GFM preset.
+Uses `prosemirror-tables` commands (`addRowBefore`, `addRowAfter`, `addColumnBefore`, `addColumnAfter`, `deleteRow`, `deleteColumn`). Badgerly already has `prosemirror-tables` via GFM preset.
 
 **What to port**:
 
-- `TableToolbar.svelte` — adapt styling to Otterly's design tokens
+- `TableToolbar.svelte` — adapt styling to Badgerly's design tokens
 - Add `alignment` attribute to table cell schema (Milkdown's GFM table cells)
 - Wire toolbar visibility to cursor position (show when inside `table_cell`/`table_header`)
-- Position toolbar above the table using Floating UI (already in Otterly's deps)
+- Position toolbar above the table using Floating UI (already in Badgerly's deps)
 
 **Moraya also has**: `commands.ts` with full table command exports (`insertTable`, `addRowBefore/After`, `addColumnBefore/After`, `deleteRow/Column`, `deleteTable`). These map directly to prosemirror-tables.
 
@@ -74,7 +74,7 @@ Pure DOM implementation (framework-agnostic). Features:
 - Language picker logic → adapt for Milkdown's `$view()` or custom NodeView
 - Language registry (POPULAR_LANGUAGES + ALL_LANGUAGES) — reusable data
 - Auto-detect pattern — lazy-load hljs, confidence threshold (relevance > 5)
-- Copy button already exists in Otterly; augment with language picker
+- Copy button already exists in Badgerly; augment with language picker
 
 ---
 
@@ -93,7 +93,7 @@ Floating toolbar with preset size buttons:
 **What to port**:
 
 - `ImageToolbar.svelte` — adapt styling
-- Add `width` attribute to Otterly's image-block schema
+- Add `width` attribute to Badgerly's image-block schema
 - Trigger toolbar on image click/select
 - Apply width as inline style on image element
 
@@ -165,7 +165,7 @@ Context menu on right-click of images:
 
 **What to port**:
 
-- `ImageContextMenu.svelte` — adapt to Otterly's styling
+- `ImageContextMenu.svelte` — adapt to Badgerly's styling
 - Wire to right-click event on image nodes
 - Integrate with image resize (Feature 3) and alt editor (Feature 7)
 
@@ -220,7 +220,7 @@ Uses command callback pattern: `onCommand(btn.id)` — decoupled from editor.
 **Effort**: Medium (2-3 days)
 **Value**: Medium — performance improvement for code-heavy notes
 
-Smarter than Otterly's Prism approach:
+Smarter than Badgerly's Prism approach:
 
 - Per-block FIFO cache (100 entries) keyed by `language + code`
 - On keystroke: cheaply maps existing decorations via `tr.mapping` (no re-parse)
@@ -293,7 +293,7 @@ Custom node type for YAML frontmatter (`---`...`---`) at document start. Special
 
 Full formatting bar with active-state buttons: Bold, Italic, Strikethrough, Code, H1-H4, Bullet/Ordered/Task list, Blockquote, Code block, Math, Link, Wikilink, Image, Table (with grid picker), HR.
 
-Moraya's `TouchToolbar` is simpler and already Svelte — better starting point for Otterly (Feature 8).
+Moraya's `TouchToolbar` is simpler and already Svelte — better starting point for Badgerly (Feature 8).
 
 ---
 
@@ -309,8 +309,8 @@ These were documented earlier and have detailed plans in `carbide/scratch/scratc
 | Focus/Zen Mode                   | Planned | carbide/scratch/scratch_highvalue.md Feature 4 |
 | Editor Width Presets             | Planned | carbide/scratch/scratch_highvalue.md Feature 5 |
 | Math/LaTeX Support               | Planned | carbide/scratch/scratch_highvalue.md Feature 6 |
-| Tantivy Search                   | Skipped | Otterly's FTS5 is comparable                   |
-| Wikilinks                        | Skipped | Otterly's implementation is more mature        |
+| Tantivy Search                   | Skipped | Badgerly's FTS5 is comparable                  |
+| Wikilinks                        | Skipped | Badgerly's implementation is more mature       |
 
 ---
 

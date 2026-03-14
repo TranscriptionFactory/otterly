@@ -47,18 +47,18 @@ All tab operations assume the content is markdown rendered by Milkdown.
 
 ### Window Management (Today)
 
-- **Single window.** `tauri.conf.json` declares one window (`"title": "otterly"`).
+- **Single window.** `tauri.conf.json` declares one window (`"title": "badgerly"`).
 - **Permissions exist** for multi-window: `core:window:allow-create`, `core:webview:allow-create-webview-window` in `capabilities/default.json`.
 - **Window state plugin** (`tauri-plugin-window-state`) persists size/position — currently only for the main window.
 - **No multi-window coordination** in Rust or frontend.
 
 ### Asset Protocol
 
-Already have `otterly-asset://vault/{vault_id}/{path}` for serving files from vault:
+Already have `badgerly-asset://vault/{vault_id}/{path}` for serving files from vault:
 
 - Registered in `storage.rs` via `register_uri_scheme_protocol`
 - MIME detection via `mime_guess` crate
-- CSP allows: `img-src 'self' data: blob: otterly-asset:`
+- CSP allows: `img-src 'self' data: blob: badgerly-asset:`
 - **Can serve PDFs and other file types** — the handler is already generic, not image-specific.
 
 ### Existing Dependencies (Relevant)
@@ -170,7 +170,7 @@ const DEFAULT_VIEWABLE_EXTENSIONS: &[&str] = &[
 ];
 ```
 
-Hidden files (`.git`, `.DS_Store`, `.otterly`) remain filtered.
+Hidden files (`.git`, `.DS_Store`, `.badgerly`) remain filtered.
 
 **Rust: Read file content for code/text/csv viewers**
 
@@ -181,7 +181,7 @@ New Tauri command:
 fn read_vault_file(vault_path: &str, relative_path: &str) -> Result<String, String>
 ```
 
-For binary files (PDF, images), the `otterly-asset://` protocol already handles serving. Frontend viewers load via URL, not by reading content into memory.
+For binary files (PDF, images), the `badgerly-asset://` protocol already handles serving. Frontend viewers load via URL, not by reading content into memory.
 
 ### Frontend Changes
 
@@ -219,7 +219,7 @@ document/
 **PDF Viewer** (highest priority):
 
 - Dep: `pdfjs-dist` (~2.5MB, lazy-loaded)
-- Load via `otterly-asset://` URL (binary, no need to read into JS string)
+- Load via `badgerly-asset://` URL (binary, no need to read into JS string)
 - Canvas-based page rendering with virtual scrolling
 - Controls: page input, prev/next, zoom slider, fit-width/fit-page
 - Text layer for selection + search (`Cmd+F` within PDF)
@@ -227,7 +227,7 @@ document/
 
 **Image Viewer**:
 
-- Load via `otterly-asset://` URL (already works for editor images)
+- Load via `badgerly-asset://` URL (already works for editor images)
 - CSS `object-fit: contain` default, toggle to actual size
 - Zoom: scroll wheel or pinch, pan via drag
 - Checkerboard background for transparency
@@ -471,7 +471,7 @@ Steps 4-7 are parallelizable. Steps 8-11 can start after Step 2.
 | `pdfjs-dist` | ~2.5MB | PDF rendering | Lazy `import()` |
 | `papaparse`  | ~15KB  | CSV parsing   | Lazy `import()` |
 
-No new deps for image, code, or text viewers (reuse `otterly-asset://` + existing CodeMirror).
+No new deps for image, code, or text viewers (reuse `badgerly-asset://` + existing CodeMirror).
 
 ---
 
@@ -503,7 +503,7 @@ __pycache__/
 
 - Parsed by Rust backend using `ignore` crate (same globset as `.gitignore`)
 - Applied during `list_folder_contents` and `list_notes` (before sending to frontend)
-- Default built-in ignores: `.git/`, `.DS_Store`, `.otterly/`, `node_modules/`
+- Default built-in ignores: `.git/`, `.DS_Store`, `.badgerly/`, `node_modules/`
 - UI: settings panel for editing ignore patterns (or direct file edit)
 
 ---

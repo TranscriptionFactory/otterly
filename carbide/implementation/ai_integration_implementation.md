@@ -2,7 +2,7 @@
 
 ## Goal
 
-Redesign Otterly's AI integration so it feels like one assistant rather than three branded provider entrypoints, while preserving explicit apply boundaries, local CLI execution, vault safety checks, and clear user control.
+Redesign Badgerly's AI integration so it feels like one assistant rather than three branded provider entrypoints, while preserving explicit apply boundaries, local CLI execution, vault safety checks, and clear user control.
 
 ## Product decisions
 

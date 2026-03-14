@@ -1,8 +1,8 @@
-# Lokus Assessment for Carbide/Otterly
+# Lokus Assessment for Carbide/Badgerly
 
 ## Scope
 
-This document compares `/Users/abir/src/lokus` and `/Users/abir/src/otterly` with emphasis on the Lokus areas that are most attractive for Carbide:
+This document compares `/Users/abir/src/lokus` and `/Users/abir/src/badgerly` with emphasis on the Lokus areas that are most attractive for Carbide:
 
 - graph view
 - bases
@@ -11,7 +11,7 @@ This document compares `/Users/abir/src/lokus` and `/Users/abir/src/otterly` wit
 - calendar
 - highly customizable UI/editor settings
 
-The goal is not to identify raw code we can copy. The goal is to identify what is worth porting, what should only inform design, and where Otterly already has enough infrastructure that Carbide should build natively on top of it.
+The goal is not to identify raw code we can copy. The goal is to identify what is worth porting, what should only inform design, and where Badgerly already has enough infrastructure that Carbide should build natively on top of it.
 
 ## Executive Summary
 
@@ -20,7 +20,7 @@ The main conclusion is simple:
 - port the ideas
 - do not port most of the code
 
-Lokus is structurally broad and horizontally organized. Otterly is much cleaner and more explicit, with feature slices, ports/adapters, services, stores, reactors, and an action registry. That makes Otterly the better implementation base for Carbide, but it also means most Lokus subsystems are a poor direct transplant.
+Lokus is structurally broad and horizontally organized. Badgerly is much cleaner and more explicit, with feature slices, ports/adapters, services, stores, reactors, and an action registry. That makes Badgerly the better implementation base for Carbide, but it also means most Lokus subsystems are a poor direct transplant.
 
 The best borrow targets are:
 
@@ -49,9 +49,9 @@ Lokus concentrates major capabilities into broad horizontal subsystems:
 
 This gives it feature breadth, but also creates strong coupling between UI, runtime state, and feature implementation.
 
-### Otterly
+### Badgerly
 
-Otterly follows a stricter vertical-slice model:
+Badgerly follows a stricter vertical-slice model:
 
 - ports + adapters for IO
 - sync stores for state
@@ -66,11 +66,11 @@ Important composition seams already exist:
 - `src/lib/app/orchestration/ui_store.svelte.ts`
 - `src/lib/app/bootstrap/ui/workspace_layout.svelte`
 
-This means Carbide should build new capabilities as first-class Otterly feature slices, not as imported Lokus islands.
+This means Carbide should build new capabilities as first-class Badgerly feature slices, not as imported Lokus islands.
 
-## What Otterly Already Has
+## What Badgerly Already Has
 
-Otterly already overlaps more with Lokus than expected:
+Badgerly already overlaps more with Lokus than expected:
 
 - rich Milkdown/ProseMirror editor with internal plugins
 - outline panel
@@ -81,7 +81,7 @@ Otterly already overlaps more with Lokus than expected:
 - typed settings catalog
 - custom theme editing with live theme controls
 
-Relevant Otterly files:
+Relevant Badgerly files:
 
 - `src/lib/features/editor/adapters/milkdown_adapter.ts`
 - `src/lib/features/editor/application/editor_service.ts`
@@ -125,7 +125,7 @@ Practical effect:
 - easier to find generic examples for advanced UI surfaces
 - more runtime indirection and more risk of broad component growth
 
-#### Otterly
+#### Badgerly
 
 - Svelte 5
 - SvelteKit 2
@@ -143,9 +143,9 @@ Practical effect:
 
 #### Verdict
 
-For Carbide’s long-term maintainability, Otterly’s frontend stack is the better fit.
+For Carbide’s long-term maintainability, Badgerly’s frontend stack is the better fit.
 
-Lokus’s React stack is more ecosystem-rich. Otterly’s Svelte stack is more architecture-friendly and likely easier to keep disciplined.
+Lokus’s React stack is more ecosystem-rich. Badgerly’s Svelte stack is more architecture-friendly and likely easier to keep disciplined.
 
 ### Editor Stack
 
@@ -160,7 +160,7 @@ Key paths:
 - `src/editor/*`
 - `src/editor/extensions/*`
 
-#### Otterly
+#### Badgerly
 
 - Milkdown on top of ProseMirror
 - internal adapters/plugins for wiki links, outline, slash commands, image paste, code views, tables, and search highlight
@@ -176,7 +176,7 @@ Both are ultimately ProseMirror-family editors, so the editor engine itself is n
 The deciding factor is integration style:
 
 - Lokus: broader editor affordance surface today
-- Otterly: cleaner integration model for future plugin host and service boundaries
+- Badgerly: cleaner integration model for future plugin host and service boundaries
 
 ### State Management and App Composition
 
@@ -193,7 +193,7 @@ Examples:
 - `src/core/editor/live-settings.js`
 - `src/core/config/store.js`
 
-#### Otterly
+#### Badgerly
 
 - typed Svelte stores
 - explicit `UIStore`, feature stores, `OpStore`
@@ -207,7 +207,7 @@ Examples:
 
 #### Verdict
 
-Otterly’s composition model is substantially more future-proof.
+Badgerly’s composition model is substantially more future-proof.
 
 This is one of the strongest reasons not to switch bases.
 
@@ -221,7 +221,7 @@ This is one of the strongest reasons not to switch bases.
 
 This gives Lokus more platform breadth, but also more operational and maintenance weight.
 
-#### Otterly
+#### Badgerly
 
 - Tauri 2
 - narrower Rust dependency surface
@@ -231,7 +231,7 @@ This is a leaner backend core and a better place to add Carbide-specific systems
 
 #### Verdict
 
-Lokus has the broader platform toolbox today. Otterly has the cleaner backend base for incremental extension.
+Lokus has the broader platform toolbox today. Badgerly has the cleaner backend base for incremental extension.
 
 ### Tooling Discipline
 
@@ -245,7 +245,7 @@ Lokus has the broader platform toolbox today. Otterly has the cleaner backend ba
 
 This is stronger on packaging breadth and end-to-end surface.
 
-#### Otterly
+#### Badgerly
 
 - pinned `pnpm`
 - TypeScript-first checks
@@ -260,9 +260,9 @@ This is stronger on internal architectural guardrails.
 
 #### Verdict
 
-Lokus has the broader release/build tooling surface. Otterly has the better architecture-governance tooling.
+Lokus has the broader release/build tooling surface. Badgerly has the better architecture-governance tooling.
 
-For Carbide, Otterly’s tooling is more valuable because the major risk is architectural drift, not lack of packaging scripts.
+For Carbide, Badgerly’s tooling is more valuable because the major risk is architectural drift, not lack of packaging scripts.
 
 ### Dependency Surface
 
@@ -281,7 +281,7 @@ Frontend dependencies include:
 
 This is powerful, but it increases baseline complexity and surface area.
 
-#### Otterly
+#### Badgerly
 
 Frontend dependencies are more focused:
 
@@ -292,11 +292,11 @@ Frontend dependencies are more focused:
 - Mermaid
 - Svelte UI primitives
 
-Otterly’s current fork is still too heavy in places, but the overall dependency story is narrower and more intentional.
+Badgerly’s current fork is still too heavy in places, but the overall dependency story is narrower and more intentional.
 
 #### Verdict
 
-Otterly has the more future-proof dependency profile. Lokus has the more ambitious all-in-one tooling profile.
+Badgerly has the more future-proof dependency profile. Lokus has the more ambitious all-in-one tooling profile.
 
 ### Testing Posture
 
@@ -305,14 +305,14 @@ Otterly has the more future-proof dependency profile. Lokus has the more ambitio
 - stronger browser/e2e posture via Playwright
 - better coverage for product-surface workflows
 
-#### Otterly
+#### Badgerly
 
 - stronger static and architectural validation
 - better alignment with clean-slice internal testing
 
 #### Verdict
 
-Lokus currently has the more complete product-surface testing setup. Otterly has the cleaner internal correctness and architecture guardrails.
+Lokus currently has the more complete product-surface testing setup. Badgerly has the cleaner internal correctness and architecture guardrails.
 
 ### Overall Tooling Verdict
 
@@ -326,12 +326,12 @@ If the question is:
 
 > which stack is the better long-term implementation foundation for an efficient and extensible Carbide?
 
-the answer is Otterly.
+the answer is Badgerly.
 
 The short version is:
 
 - Lokus wins on breadth
-- Otterly wins on future-proof implementation discipline
+- Badgerly wins on future-proof implementation discipline
 
 ## Area-by-Area Assessment
 
@@ -354,9 +354,9 @@ Graph is a serious subsystem, not just a screen:
 - graph metrics
 - optional persistence/indexing behavior
 
-#### Otterly
+#### Badgerly
 
-Otterly has the primitives for a graph MVP, but not the feature:
+Badgerly has the primitives for a graph MVP, but not the feature:
 
 - links/outlinks/backlinks already exist
 - search/index ports already exist
@@ -377,7 +377,7 @@ Best existing seams:
 
 #### Verdict
 
-Graph is a good near-term Carbide feature. It can be built natively on top of Otterly’s existing link/index model.
+Graph is a good near-term Carbide feature. It can be built natively on top of Badgerly’s existing link/index model.
 
 ### 2. Bases
 
@@ -404,9 +404,9 @@ Important properties:
 - grouping, sorting, pagination
 - multiple view types in the schema, including table, list, gallery, kanban, calendar, timeline, chart
 
-#### Otterly
+#### Badgerly
 
-Otterly does not yet have the foundations bases needs:
+Badgerly does not yet have the foundations bases needs:
 
 - no structured frontmatter metadata layer
 - no property/query model
@@ -417,7 +417,7 @@ Otterly does not yet have the foundations bases needs:
 
 - **Portability:** adapt heavily
 - **What to borrow:** schema concepts, query vocabulary, property model, view-model direction
-- **What to rewrite:** storage, parsing, UI, and integration into Otterly architecture
+- **What to rewrite:** storage, parsing, UI, and integration into Badgerly architecture
 
 #### Verdict
 
@@ -456,16 +456,16 @@ Important caution:
 - parts of the marketplace UI still appear semi-productized rather than fully production-hardened
 - the implementation is strongly tied to React, Lokus runtime assumptions, and its editor model
 
-#### Otterly
+#### Badgerly
 
-Otterly currently has no user-installable extension runtime:
+Badgerly currently has no user-installable extension runtime:
 
 - no manifest layer
 - no registry
 - no sandbox/runtime boundary
 - no plugin host
 
-Otterly’s current “plugins” are internal editor adapters, not a product extension system.
+Badgerly’s current “plugins” are internal editor adapters, not a product extension system.
 
 #### Recommendation
 
@@ -499,14 +499,14 @@ Important observations:
 
 This is deeper than a visual board over markdown task list items.
 
-#### Otterly
+#### Badgerly
 
-Otterly has:
+Badgerly has:
 
 - task-list syntax support in the editor
 - slash command insertion for todo/checklist items
 
-Otterly does not have:
+Badgerly does not have:
 
 - task entities
 - task store/service
@@ -546,9 +546,9 @@ It includes:
 - iCal subscriptions
 - auth and sync flows
 
-#### Otterly
+#### Badgerly
 
-Otterly has no calendar slice yet.
+Badgerly has no calendar slice yet.
 
 #### Recommendation
 
@@ -581,16 +581,16 @@ Important behavior:
 
 This is highly visible and product-differentiating.
 
-#### Otterly
+#### Badgerly
 
-Otterly already has a good foundation:
+Badgerly already has a good foundation:
 
 - typed editor settings
 - settings catalog
 - theme editor
 - global vs vault-scoped persistence split
 
-Important Otterly files:
+Important Badgerly files:
 
 - `src/lib/shared/types/editor_settings.ts`
 - `src/lib/features/settings/domain/settings_catalog.ts`
@@ -606,13 +606,13 @@ Important Otterly files:
 
 #### Verdict
 
-This is the best near-term Carbide port target. It fits Otterly’s current architecture and yields immediate product value.
+This is the best near-term Carbide port target. It fits Badgerly’s current architecture and yields immediate product value.
 
 ## Portability Matrix
 
 | Area                    | Recommendation               | Notes                                                         |
 | ----------------------- | ---------------------------- | ------------------------------------------------------------- |
-| Graph                   | Adapt                        | Reuse link/index concepts, rewrite as Otterly `graph` slice   |
+| Graph                   | Adapt                        | Reuse link/index concepts, rewrite as Badgerly `graph` slice  |
 | Bases                   | Adapt heavily                | Strong strategic value, needs metadata/query foundation first |
 | Extensions              | Adapt concepts only          | Borrow manifest/API ideas, reimplement runtime                |
 | Kanban                  | Reimplement                  | Needs task domain first                                       |
@@ -653,7 +653,7 @@ This is the best near-term Carbide port target. It fits Otterly’s current arch
 If Carbide wants the most leverage from Lokus without dragging in its coupling, the right strategy is:
 
 - use Lokus as a product/design reference
-- use Otterly as the implementation architecture
+- use Badgerly as the implementation architecture
 
 The order should be:
 
@@ -663,24 +663,24 @@ The order should be:
 4. treat tasks/kanban/calendar as views over a stronger underlying model
 5. build the plugin host natively rather than trying to inherit Lokus runtime code
 
-## Base-Switch Decision: Otterly vs Rebuilding on a Lokus Clone
+## Base-Switch Decision: Badgerly vs Rebuilding on a Lokus Clone
 
 The practical question is whether Carbide should:
 
-1. continue on Otterly and port selected Lokus ideas, or
+1. continue on Badgerly and port selected Lokus ideas, or
 2. clone Lokus and replay Carbide-specific work such as vault/global settings, CLI AI integration, and terminal improvements onto it
 
 ### Recommendation
 
-Carbide should stay on Otterly.
+Carbide should stay on Badgerly.
 
-Lokus is the better source of product inspiration. Otterly is the better implementation base.
+Lokus is the better source of product inspiration. Badgerly is the better implementation base.
 
-### Why Otterly Is the Better Long-Term Base
+### Why Badgerly Is the Better Long-Term Base
 
 #### 1. Better architectural extensibility
 
-Otterly is structurally cleaner:
+Badgerly is structurally cleaner:
 
 - explicit ports/adapters for IO
 - synchronous state stores
@@ -702,7 +702,7 @@ Lokus has broader subsystems now, but they are more entangled with large React v
 
 Carbide already cares about vault-scoped vs global settings, ecosystem compatibility, and future plugin boundaries.
 
-Otterly already supports that direction:
+Badgerly already supports that direction:
 
 - `src/lib/features/settings/application/settings_service.ts`
 - `src/lib/shared/types/editor_settings.ts`
@@ -712,7 +712,7 @@ Lokus’s config model is much more global and less disciplined. Its `ConfigMana
 
 #### 3. Better future-proofing for efficiency work
 
-Otterly has current performance issues in this fork, but they are mostly issues of loading strategy and composition boundaries. Those are fixable.
+Badgerly has current performance issues in this fork, but they are mostly issues of loading strategy and composition boundaries. Those are fixable.
 
 Lokus’s breadth is attractive, but more of its complexity is baked into how the app is organized:
 
@@ -735,17 +735,17 @@ That is a rational demo strategy, but not the best long-term platform strategy.
 
 ### Area-by-Area Base Comparison
 
-| Concern                | Better Short-Term Surface       | Better Long-Term Base                       |
-| ---------------------- | ------------------------------- | ------------------------------------------- |
-| Graph                  | Lokus                           | Otterly                                     |
-| Bases                  | Lokus                           | Otterly, after foundation work              |
-| Extensions             | Lokus has more surface          | Otterly for a clean native host             |
-| Tasks/Kanban/Calendar  | Lokus                           | Otterly if built on a stronger domain model |
-| Vault/global settings  | Otterly                         | Otterly                                     |
-| AI CLI integration     | roughly neutral                 | Otterly                                     |
-| Terminal panel         | roughly neutral                 | Otterly                                     |
-| Future efficiency work | Lokus has more to untangle      | Otterly                                     |
-| Future extensibility   | Lokus has more existing breadth | Otterly                                     |
+| Concern                | Better Short-Term Surface       | Better Long-Term Base                        |
+| ---------------------- | ------------------------------- | -------------------------------------------- |
+| Graph                  | Lokus                           | Badgerly                                     |
+| Bases                  | Lokus                           | Badgerly, after foundation work              |
+| Extensions             | Lokus has more surface          | Badgerly for a clean native host             |
+| Tasks/Kanban/Calendar  | Lokus                           | Badgerly if built on a stronger domain model |
+| Vault/global settings  | Badgerly                        | Badgerly                                     |
+| AI CLI integration     | roughly neutral                 | Badgerly                                     |
+| Terminal panel         | roughly neutral                 | Badgerly                                     |
+| Future efficiency work | Lokus has more to untangle      | Badgerly                                     |
+| Future extensibility   | Lokus has more existing breadth | Badgerly                                     |
 
 ### Final Verdict
 
@@ -753,7 +753,7 @@ If the question is:
 
 > which app is more future-proof in efficiency and extensibility?
 
-the answer is Otterly.
+the answer is Badgerly.
 
 If the question is:
 
@@ -763,7 +763,7 @@ the answer is Lokus.
 
 For Carbide, the right strategy is:
 
-- keep Otterly as the base
+- keep Badgerly as the base
 - keep using Lokus as a design and systems reference
 
 ## Lokus Design and Vault/Workspace Assumptions
@@ -807,7 +807,7 @@ Notable behaviors:
 - a `.lokus` directory is created/ensured inside the workspace root
 - a `notes/` folder is created for new workspaces
 
-This is a stronger product opinion than Otterly’s current model.
+This is a stronger product opinion than Badgerly’s current model.
 
 ### 3. “Any directory can become a workspace” assumption
 
@@ -905,7 +905,7 @@ Carbide currently wants:
 - future metadata views like graph/base/orphans/homonyms
 - a plugin host that aligns with the existing feature-slice architecture
 
-Those goals fit Otterly better than Lokus’s workspace-root assumptions.
+Those goals fit Badgerly better than Lokus’s workspace-root assumptions.
 
 Lokus’s assumptions are not wrong. They are just more opinionated:
 
@@ -935,7 +935,7 @@ That makes Lokus a strong source of ideas, but a weaker direct base for Carbide.
 - `src/components/Calendar/CalendarView.jsx`
 - `src/services/calendar.js`
 
-### Otterly
+### Badgerly
 
 - `docs/architecture.md`
 - `src/lib/app/di/create_app_context.ts`

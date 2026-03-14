@@ -1,6 +1,6 @@
 # Phase 5 Implementation: Native Plugin Host
 
-This document turns `carbide/plugin_system.md` into an implementation plan that fits the current Otterly architecture.
+This document turns `carbide/plugin_system.md` into an implementation plan that fits the current Badgerly architecture.
 
 ## Source of truth
 

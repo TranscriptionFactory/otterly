@@ -2,14 +2,14 @@
 
 ## Context
 
-Otterly's editor is Milkdown (ProseMirror WYSIWYG) with no concept of editing mode. We want visual ↔ source (raw markdown) toggle, with split mode deferred. Moraya (sister project) has a battle-tested `SourceEditor.svelte` we can port.
+Badgerly's editor is Milkdown (ProseMirror WYSIWYG) with no concept of editing mode. We want visual ↔ source (raw markdown) toggle, with split mode deferred. Moraya (sister project) has a battle-tested `SourceEditor.svelte` we can port.
 
 **Key decisions:**
 
 - SourceEditor writes directly to `EditorStore` (bypasses `EditorService`)
 - `EditorService.flush()` becomes mode-aware (reads store in source mode, pulls from Milkdown in visual mode)
 - `EditorMode = 'visual' | 'source' | 'split'` — only visual/source implemented now
-- Port moraya's `SourceEditor.svelte` (Svelte 5 runes, same as otterly)
+- Port moraya's `SourceEditor.svelte` (Svelte 5 runes, same as badgerly)
 
 ---
 
@@ -54,7 +54,7 @@ Port moraya's `extractHeadingsFromMarkdown` — scans markdown lines for ATX hea
 
 **New file:** `src/lib/features/editor/ui/source_editor.svelte`
 
-Port from `/Users/abir/src/moraya/src/lib/editor/SourceEditor.svelte` (~435 lines), adapting to otterly conventions:
+Port from `/Users/abir/src/moraya/src/lib/editor/SourceEditor.svelte` (~435 lines), adapting to badgerly conventions:
 
 **Props:**
 
@@ -78,7 +78,7 @@ Port from `/Users/abir/src/moraya/src/lib/editor/SourceEditor.svelte` (~435 line
 - `onDestroy`: save cursor offset + scroll fraction to store, flush pending debounced content
 - Debounced outline extraction (300ms) using `extract_headings_from_markdown()`
 
-**Adapt to otterly conventions:**
+**Adapt to badgerly conventions:**
 
 - CSS custom properties: `--space-*`, `--text-*`, `--border`, `--foreground`, `--muted-foreground`
 - BEM class naming: `SourceEditor__textarea`, `SourceEditor__line-numbers`, etc.

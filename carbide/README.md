@@ -1,10 +1,10 @@
 # Carbide
 
-Carbide is the product and implementation direction for turning Otterly into a high-performance, local-first Markdown knowledge-work app.
+Carbide is the product and implementation direction for turning Badgerly into a high-performance, local-first Markdown knowledge-work app.
 
 The project strategy is simple:
 
-- fork Otterly as the implementation base
+- fork Badgerly as the implementation base
 - borrow proven ideas from sibling/reference apps like Moraya, Scratch, and selected external projects
 - keep storage and ecosystem choices Markdown-first and vault-first
 - ship the core daily-driver features before chasing plugin breadth or speculative platform work
@@ -71,7 +71,7 @@ If a document no longer drives active work but is still useful as history or rat
 - Prefer snake_case file names for new docs.
 - Put the current source of truth in one place. Do not create parallel roadmap docs.
 - When a plan becomes historical context, archive it instead of leaving it mixed with active planning docs.
-- Treat `carbide/.otterly/` as local workspace state, not project documentation.
+- Treat `carbide/.badgerly/` as local workspace state, not project documentation.
 
 ## Current map
 

@@ -46,7 +46,7 @@ This index is the implementation packet for the current Carbide roadmap. Read it
 
 ## Current implementation stance
 
-- Otterly remains the base.
+- Badgerly remains the base.
 - Lokus remains a donor.
 - Ferrite remains a performance and safety donor.
 - Plugins, terminal sessions, and command execution remain separate security domains.

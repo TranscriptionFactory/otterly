@@ -1,19 +1,19 @@
 # Carbide TODO Tracker
 
-> Tracks implementation tasks for transforming Otterly into Carbide.
+> Tracks implementation tasks for transforming Badgerly into Carbide.
 > Status: `[ ]` pending | `[~]` in progress | `[x]` done | `[-]` dropped
 
 ---
 
 ## Phase 0: Audit & Bootstrap
 
-- [x] Audit Otterly codebase (architecture, commands, stores, components)
+- [x] Audit Badgerly codebase (architecture, commands, stores, components)
 - [-] Produce `carbide/AUDIT.md` — superseded by `carbide-project-guide.md` and inline knowledge
 - [-] Produce `carbide/ARCHITECTURE.md` — superseded by `carbide-project-guide.md` and `docs/architecture.md`
 - [x] Verify `cargo tauri dev` builds and runs cleanly
 - [ ] Rebrand: app name, window title, asset URI scheme, config paths
 
-## Cross-cutting otterly-carbide compatibility guardrails
+## Cross-cutting badgerly-carbide compatibility guardrails
 
 - [ ] Keep note storage Obsidian-flavored Markdown and add a WYSIWYG table editing helper instead of inventing a proprietary table format
 - [ ] Keep JSON Canvas explicitly on the roadmap as a storage format, while shipping Excalidraw-only canvas support for now
@@ -25,7 +25,7 @@
 
 ## Phase 1: Vault Switcher (Dropdown)
 
-> Start with Moraya-style dropdown vault switching. Otterly already has vault switching
+> Start with Moraya-style dropdown vault switching. Badgerly already has vault switching
 > logic; this phase improves the UX with a quick-access dropdown in the sidebar header.
 > Simultaneous multi-vault sidebar (VS Code-style) is deferred to a future enhancement.
 
