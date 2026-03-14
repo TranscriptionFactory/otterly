@@ -62,8 +62,11 @@ pub fn vault_id_for_path(path: &str) -> String {
 }
 
 pub fn store_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
-    let dir = dir.join("otterly");
+    let dir = app
+        .path()
+        .home_dir()
+        .map_err(|e| e.to_string())?
+        .join(".otterly");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir.join("vaults.json"))
 }
