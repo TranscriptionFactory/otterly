@@ -456,14 +456,16 @@ This is an optimization — not required for correctness. The current full-inval
 | 3     | Batched semantic KNN              | —          | Small                |
 | 4     | Streaming vault graph             | Phase 2    | Medium               |
 | 5     | Cache invalidation improvements   | —          | Small                |
+| 6     | Chunked note embeddings           | —          | Medium               |
 
 **Phase 1 and 3 are independent** — can be developed in parallel.
 **Phase 2 depends on Phase 1** — the worker communicates with the PixiJS renderer.
 **Phase 4 depends on Phase 2** — streaming feeds into the worker's incremental mode.
 **Phase 5 is independent** — pure backend optimization.
+**Phase 6 is independent** — pure Rust-side embedding pipeline change. Frontend types unchanged.
 
-Recommended execution order: **Phase 3 → Phase 1 → Phase 2 → Phase 5 → Phase 4**.
-Phase 3 is the smallest win with the least risk. Phase 1+2 are the biggest wins. Phase 4 is only needed if we want to support >5k note vaults (currently warned against). Phase 5 is a quality-of-life improvement.
+Recommended execution order: **Phase 3 → Phase 1 → Phase 2 → Phase 5 → Phase 6 → Phase 4**.
+Phase 3 is the smallest win with the least risk. Phase 1+2 are the biggest wins. Phase 5 is a quality-of-life improvement. Phase 6 improves search quality for long notes. Phase 4 is only needed if we want to support >5k note vaults (currently warned against).
 
 ---
 
@@ -534,3 +536,198 @@ Phase 3 is the smallest win with the least risk. Phase 1+2 are the biggest wins.
 | Stabilization time (5k nodes) | `performance.now()` around worker init→stabilized   | <1s              |
 | Semantic batch (200 notes)    | `performance.now()` around batch call               | <100ms           |
 | Memory (5k nodes)             | Chrome DevTools Memory tab                          | <30MB graph-only |
+
+---
+
+## Phase 6: Chunked Note Embeddings
+
+**Goal:** Improve semantic search quality by embedding notes as multiple chunks instead of a single unit, respecting BGE-Small-EN-V1.5's 512-token context window.
+
+### Decision Log
+
+| #   | Decision                                                                             | Rationale                                                                                                                                                                                                                                                               |
+| --- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D9  | Chunk long notes at **heading/paragraph boundaries** (not fixed token windows)       | Markdown headings and paragraphs are natural semantic boundaries. Fixed token windows split mid-sentence, producing incoherent chunks that degrade embedding quality. Heading-aware chunking preserves the author's topic structure.                                    |
+| D10 | Store multiple chunk embeddings per note with **composite key (path + chunk_index)** | A single embedding per note loses information when the note exceeds 512 tokens — the model truncates silently. Storing per-chunk embeddings with a composite primary key is simple, avoids a separate join table, and maps cleanly to the existing schema pattern.      |
+| D11 | **Aggregate chunk-level distances to note-level** for graph edges and similar-notes  | The frontend operates on notes, not chunks. Aggregating via min-distance (best matching chunk pair) preserves the strongest semantic signal between two notes without surfacing chunk internals. Max or mean would dilute strong local matches with unrelated sections. |
+| D12 | Chunk strategy is **NOT a user-facing setting** — it is an implementation detail     | Users think in terms of notes and search quality, not tokens or chunk boundaries. Exposing chunk size as a setting creates a knob nobody can reason about, and changing it would invalidate all stored embeddings, forcing a full re-embed.                             |
+
+### Rejected Alternatives
+
+| Alternative                        | Why Rejected                                                                                                                                                               |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fixed token window chunking        | Splits mid-sentence and mid-paragraph, producing incoherent text fragments. BGE embeddings degrade significantly on truncated/contextless text.                            |
+| User-configurable chunk size       | Users don't think in tokens. Any change invalidates all embeddings, triggering a full vault re-embed. Adds a setting that can only make things worse.                      |
+| Separate `chunk_embeddings` table  | Requires a JOIN for every query and complicates the migration. A composite primary key on a single table achieves the same result with simpler queries and no FK overhead. |
+| Mean/max aggregation for distances | Mean dilutes strong local matches with unrelated sections. Max returns the worst match, which is meaningless. Min-distance captures the strongest semantic connection.     |
+
+### A. Schema Changes
+
+New table replaces `note_embeddings`:
+
+```sql
+CREATE TABLE note_chunks (
+    path        TEXT    NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    chunk_text  TEXT    NOT NULL,
+    embedding   BLOB    NOT NULL,
+    PRIMARY KEY (path, chunk_index)
+);
+```
+
+Migration:
+
+- Drop `note_embeddings` table
+- Create `note_chunks` table
+- `embedding_meta` table unchanged (schema version bumped to trigger re-embed detection)
+- Trigger full re-embed via existing `rebuild_embeddings` flow
+
+### B. Chunking Strategy
+
+Implemented in a new `chunker.rs` module.
+
+| Parameter          | Value       | Rationale                                                            |
+| ------------------ | ----------- | -------------------------------------------------------------------- |
+| Primary split      | `## / ###`  | Markdown headings are natural topic boundaries                       |
+| Secondary split    | `\n\n`      | Paragraph boundaries within sections that exceed ~400 tokens         |
+| Minimum chunk size | 50 tokens   | Tiny chunks (e.g., a heading with one sentence) merged with previous |
+| Maximum chunk size | 450 tokens  | Leaves 62-token headroom for BGE's 512-token limit                   |
+| Short note bypass  | <100 tokens | Entire note stored as a single chunk — no splitting needed           |
+| Heading prefix     | Yes         | Each chunk includes its nearest parent heading as context prefix     |
+
+Token counting: whitespace split (approximate). BGE tokenizer produces ~1.3 tokens per whitespace token on average — the 450 ceiling with 62-token headroom absorbs this variance.
+
+Chunking algorithm:
+
+1. Split note on heading boundaries (`## ` / `### `)
+2. For each heading section, if section exceeds ~400 tokens, split on double-newline (paragraph boundaries)
+3. If any resulting chunk is <50 tokens, merge it with the previous chunk
+4. Prepend the nearest parent heading to each chunk (e.g., `## Architecture\n` + paragraph text)
+5. If the entire note is <100 tokens, return it as a single chunk
+
+### C. Rust Implementation
+
+#### New File: `src-tauri/src/features/search/chunker.rs`
+
+```rust
+pub struct Chunk {
+    pub text: String,
+    pub heading_context: Option<String>,
+    pub byte_offset: usize,
+}
+
+pub fn chunk_markdown(text: &str) -> Vec<Chunk>
+```
+
+- Splits on heading regex `^#{2,3}\s`
+- Applies paragraph splitting for oversized sections
+- Merges tiny chunks (<50 whitespace-split tokens)
+- Prefixes heading context to each chunk
+
+#### Modified File: `src-tauri/src/features/search/service.rs`
+
+`handle_embed_batch`:
+
+```
+// Before: embed full note text as single unit
+// After:
+1. chunk_markdown(note_text) → Vec<Chunk>
+2. Embed each chunk.text via the model
+3. Store each (path, chunk_index, chunk_text, embedding) in note_chunks
+4. Delete any existing chunks for this path before inserting (handles re-embeds)
+```
+
+#### Modified File: `src-tauri/src/features/search/vector_db.rs`
+
+Schema update:
+
+- `create_tables()` creates `note_chunks` instead of `note_embeddings`
+- `insert_embedding()` → `insert_chunks(path, chunks: Vec<(String, Vec<f32>)>)`
+- `get_embedding(path)` → `get_chunks(path) -> Vec<(chunk_index, embedding)>`
+- `knn_search(query_embedding, limit, threshold)` updated to:
+  1. Compare query against all chunk embeddings
+  2. Group results by note path
+  3. Return min distance per note path (best chunk match)
+- `knn_search_batch(paths, limit, threshold)` same aggregation logic — for each source note, search all chunks of that note against all other chunks, return min distance per (source, target) note pair
+
+### D. Search Impact
+
+| Function                                         | Change                                                                                              |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `semantic_search(query)`                         | Embed query → search all chunks → group by note path → return best chunk distance per note          |
+| `find_similar_notes(note_path)`                  | Get all chunks for note → search each chunk against all other chunks → min distance per target note |
+| `semantic_search_batch(paths, limit, threshold)` | Same aggregation as `find_similar_notes` but for multiple source notes in one call                  |
+| `hybrid.rs`                                      | No change — operates on note-level results after aggregation                                        |
+
+### E. Frontend Impact
+
+- `SemanticEdge` and `SemanticSearchHit` types **unchanged** (still note-level)
+- No settings changes — `semantic_similarity_threshold`, `semantic_suggested_links_limit`, `semantic_graph_edges_per_note` all operate on aggregated note-level distances
+- Future enhancement (not in this phase): surface which chunk matched in search results
+
+### F. Migration
+
+1. On startup, check `embedding_meta` for schema version
+2. If old schema detected (has `note_embeddings` table):
+   - Drop `note_embeddings`
+   - Create `note_chunks`
+   - Bump schema version in `embedding_meta`
+   - Trigger full re-embed via existing `rebuild_embeddings` flow (marks all notes as needing re-embedding)
+3. Re-embed runs in background — chunking + embedding happens during normal sync cycle
+
+### G. Performance Considerations
+
+| Metric              | Before (single embedding) | After (chunked)                             |
+| ------------------- | ------------------------- | ------------------------------------------- |
+| Storage per note    | ~1.5KB (384 × 4 bytes)    | ~4.5KB (avg 3 chunks × 384 × 4 bytes)       |
+| KNN search (1k)     | 1000 vectors, <5ms        | ~3000 vectors, <10ms                        |
+| KNN search (5k)     | 5000 vectors, ~15ms       | ~15000 vectors, ~40ms                       |
+| Embed sync per note | 1 embed call              | ~3 embed calls (amortized by batch_size=50) |
+| Total DB size (1k)  | ~1.5MB embeddings         | ~4.5MB embeddings + chunk text              |
+| Total DB size (5k)  | ~7.5MB embeddings         | ~22.5MB embeddings + chunk text             |
+
+At 5k notes with 3 chunks each, 15k vectors × cosine distance is still well under 100ms — no index structure needed.
+
+### H. Testing
+
+#### Unit Tests
+
+| Test File           | Scenarios                                                                                                                                                                                           |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `chunker.test.rs`   | Short note (<100 tokens) → single chunk. Heading-based splitting. Paragraph splitting for long sections. Tiny chunk merging. Heading context prefix. Code blocks preserved. Empty note → empty vec. |
+| `vector_db.test.rs` | Insert and retrieve chunks. KNN returns min-distance per note (not per chunk). Delete old chunks on re-embed. Schema migration from `note_embeddings` to `note_chunks`.                             |
+
+#### Integration Tests
+
+| Scenario                                      | Assertion                                                                |
+| --------------------------------------------- | ------------------------------------------------------------------------ |
+| Embed a multi-heading note, search by heading | Returns the note with distance reflecting the best-matching chunk        |
+| Embed chunked note, `find_similar_notes`      | Returns correct similar notes with min-distance aggregation              |
+| Migration from old schema                     | `note_embeddings` dropped, `note_chunks` created, re-embed triggered     |
+| Batch search with chunked notes               | `semantic_search_batch` returns correct edges with chunk-level precision |
+
+### I. Files Summary
+
+#### New Files
+
+| File                                       | Purpose                       |
+| ------------------------------------------ | ----------------------------- |
+| `src-tauri/src/features/search/chunker.rs` | Markdown-aware chunking logic |
+| `tests/search/chunker.test.rs`             | Chunker unit tests            |
+
+#### Modified Files
+
+| File                                         | Changes                                                     |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| `src-tauri/src/features/search/service.rs`   | Chunk notes before embedding, store per-chunk               |
+| `src-tauri/src/features/search/vector_db.rs` | New schema (`note_chunks`), aggregated KNN, migration logic |
+| `src-tauri/src/features/search/mod.rs`       | Add `chunker` module declaration                            |
+
+#### Unchanged
+
+| File                                                  | Why                                                        |
+| ----------------------------------------------------- | ---------------------------------------------------------- |
+| `src/lib/features/search/domain/types.ts`             | `SemanticEdge` and `SemanticSearchHit` unchanged           |
+| `src/lib/features/search/application/hybrid.ts`       | Operates on note-level results after Rust-side aggregation |
+| `src/lib/features/graph/application/graph_service.ts` | Consumes same `SemanticEdge` shape                         |
+| `src/lib/components/ui/sidebar/constants.ts`          | No new settings exposed                                    |
