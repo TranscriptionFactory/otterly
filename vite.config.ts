@@ -43,7 +43,7 @@ export default defineConfig({
     include: ["d3-force"],
   },
   worker: {
-    format: "es",
+    format: "iife",
   },
   server: {
     host: "127.0.0.1",
