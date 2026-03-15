@@ -316,6 +316,9 @@ export async function close_tab_immediate(
   if (tab.kind === "note") {
     services.editor.close_buffer?.(tab.note_path);
   }
+  if (tab.kind === "graph") {
+    stores.graph.set_view_mode("neighborhood");
+  }
 
   if (was_active) {
     await open_active_tab_note(input);

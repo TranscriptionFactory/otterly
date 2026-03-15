@@ -14,6 +14,7 @@ import { create_logger } from "$lib/shared/utils/logger";
 const log = create_logger("graph_service");
 
 export class GraphService {
+  private neighborhood_load_revision = 0;
   private vault_load_revision = 0;
   private semantic_load_revision = 0;
 
@@ -36,6 +37,7 @@ export class GraphService {
       return;
     }
 
+    const revision = ++this.neighborhood_load_revision;
     this.graph_store.set_panel_open(true);
     this.graph_store.start_loading(note_path);
 
@@ -44,8 +46,10 @@ export class GraphService {
         vault_id,
         note_path,
       );
+      if (revision !== this.neighborhood_load_revision) return;
       this.graph_store.set_snapshot(snapshot);
     } catch (error) {
+      if (revision !== this.neighborhood_load_revision) return;
       const message = error_message(error);
       log.error("Load graph neighborhood failed", {
         error: message,
