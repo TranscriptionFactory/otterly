@@ -90,7 +90,6 @@
 
         const w = new Worker(
           new URL("../domain/vault_graph_worker.ts", import.meta.url),
-          { type: "module" },
         );
         worker = w;
         w.onerror = (event) => {
