@@ -141,15 +141,18 @@ export function register_graph_actions(
     id: ACTION_IDS.graph_open_as_tab,
     label: "Open Vault Graph",
     execute: async () => {
-      // Close sidebar graph to prevent dual Pixi.js rendering
-      graph_store.set_panel_open(false);
+      graph_service.close_panel();
       if (stores.ui.sidebar_view === "graph") {
-        stores.ui.set_sidebar_view("explorer");
+        stores.ui.sidebar_view = "explorer";
       }
 
+      graph_store.set_view_mode("vault");
       stores.tab.open_graph_tab(GRAPH_TAB_ID, GRAPH_TAB_TITLE);
       stores.editor.clear_open_note();
-      await graph_service.load_vault_graph();
+
+      if (!graph_store.vault_snapshot) {
+        await graph_service.load_vault_graph();
+      }
     },
   });
 }
