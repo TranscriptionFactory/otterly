@@ -3,7 +3,8 @@ use crate::features::search::db as search_db;
 use crate::features::search::embeddings::EmbeddingServiceState;
 use crate::features::search::link_parser;
 use crate::features::search::model::{
-    EmbeddingStatus, HybridSearchHit, IndexNoteMeta, SearchHit, SearchScope, SemanticSearchHit,
+    BatchSemanticEdge, EmbeddingStatus, HybridSearchHit, IndexNoteMeta, SearchHit, SearchScope,
+    SemanticSearchHit,
 };
 use crate::features::search::{hybrid, vector_db};
 use crate::shared::storage;
@@ -1111,6 +1112,41 @@ pub fn find_similar_notes(
             }
         }
         Ok(results)
+    })
+}
+
+#[tauri::command]
+pub fn semantic_search_batch(
+    app: AppHandle,
+    vault_id: String,
+    paths: Vec<String>,
+    limit: usize,
+    distance_threshold: f32,
+) -> Result<Vec<BatchSemanticEdge>, String> {
+    with_read_conn(&app, &vault_id, |conn| {
+        let edges = vector_db::knn_search_batch(conn, &paths, limit, distance_threshold, |path| {
+            let mut set = std::collections::HashSet::new();
+            if let Ok(backlinks) = search_db::get_backlinks(conn, path) {
+                for n in backlinks {
+                    set.insert(n.path.clone());
+                }
+            }
+            if let Ok(outlinks) = search_db::get_outlinks(conn, path) {
+                for n in outlinks {
+                    set.insert(n.path.clone());
+                }
+            }
+            set
+        })?;
+
+        Ok(edges
+            .into_iter()
+            .map(|(source, target, distance)| BatchSemanticEdge {
+                source,
+                target,
+                distance,
+            })
+            .collect())
     })
 }
 

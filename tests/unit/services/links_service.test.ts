@@ -68,6 +68,7 @@ describe("LinksService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -112,6 +113,7 @@ describe("LinksService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -172,6 +174,7 @@ describe("LinksService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -236,6 +239,7 @@ describe("LinksService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -287,6 +291,7 @@ describe("LinksService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
     const vault_store = new VaultStore();
@@ -344,6 +349,7 @@ describe("LinksService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -403,6 +409,7 @@ function make_search_port(
       is_embedding: false,
     }),
     find_similar_notes: vi.fn().mockResolvedValue([]),
+    semantic_search_batch: vi.fn().mockResolvedValue([]),
     rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };

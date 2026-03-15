@@ -306,6 +306,22 @@ export function create_search_tauri_adapter(): SearchPort {
       }));
     },
 
+    async semantic_search_batch(
+      vault_id: VaultId,
+      paths: string[],
+      limit: number,
+      distance_threshold: number,
+    ): Promise<{ source: string; target: string; distance: number }[]> {
+      return invoke_search<
+        { source: string; target: string; distance: number }[]
+      >("semantic_search_batch", {
+        vaultId: vault_id,
+        paths,
+        limit,
+        distanceThreshold: distance_threshold,
+      });
+    },
+
     async get_embedding_status(vault_id: VaultId): Promise<EmbeddingStatus> {
       return invoke_search<TauriEmbeddingStatus>("get_embedding_status", {
         vaultId: vault_id,

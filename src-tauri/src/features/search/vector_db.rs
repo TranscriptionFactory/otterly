@@ -126,6 +126,74 @@ pub fn knn_search(
     Ok(scored)
 }
 
+pub fn knn_search_batch(
+    conn: &Connection,
+    paths: &[String],
+    limit: usize,
+    distance_threshold: f32,
+    exclude_linked_fn: impl Fn(&str) -> std::collections::HashSet<String>,
+) -> Result<Vec<(String, String, f32)>, String> {
+    let mut stmt = conn
+        .prepare("SELECT path, embedding FROM note_embeddings")
+        .map_err(|e| e.to_string())?;
+
+    let all_embeddings: Vec<(String, Vec<f32>)> = stmt
+        .query_map([], |row| {
+            let path: String = row.get(0)?;
+            let blob: Vec<u8> = row.get(1)?;
+            Ok((path, blob))
+        })
+        .map_err(|e| e.to_string())?
+        .filter_map(|r| r.ok())
+        .map(|(path, blob)| {
+            let vec = bytes_to_floats(&blob);
+            (path, vec)
+        })
+        .collect();
+
+    let path_set: std::collections::HashSet<&str> = paths.iter().map(|s| s.as_str()).collect();
+    let mut seen = std::collections::HashSet::new();
+    let mut edges = Vec::new();
+
+    for query_path in paths {
+        let query_vec = match all_embeddings.iter().find(|(p, _)| p == query_path) {
+            Some((_, v)) => v,
+            None => continue,
+        };
+
+        let linked = exclude_linked_fn(query_path);
+
+        let mut scored: Vec<(&str, f32)> = all_embeddings
+            .iter()
+            .filter(|(p, _)| p != query_path && !linked.contains(p.as_str()))
+            .map(|(p, v)| (p.as_str(), cosine_distance(query_vec, v)))
+            .filter(|(_, d)| *d < distance_threshold)
+            .collect();
+
+        scored.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        scored.truncate(limit);
+
+        for (target, distance) in scored {
+            if !path_set.contains(target) {
+                continue;
+            }
+            let key = if query_path.as_str() < target {
+                (query_path.as_str(), target)
+            } else {
+                (target, query_path.as_str())
+            };
+            let key_string = format!("{}|{}", key.0, key.1);
+            if seen.contains(&key_string) {
+                continue;
+            }
+            seen.insert(key_string);
+            edges.push((query_path.clone(), target.to_string(), distance));
+        }
+    }
+
+    Ok(edges)
+}
+
 pub fn get_embedding(conn: &Connection, path: &str) -> Option<Vec<f32>> {
     let bytes: Vec<u8> = conn
         .query_row(

@@ -93,6 +93,12 @@ export interface SearchPort {
     limit?: number,
     exclude_linked?: boolean,
   ): Promise<SemanticSearchHit[]>;
+  semantic_search_batch(
+    vault_id: VaultId,
+    paths: string[],
+    limit: number,
+    distance_threshold: number,
+  ): Promise<{ source: string; target: string; distance: number }[]>;
   get_embedding_status(vault_id: VaultId): Promise<EmbeddingStatus>;
   rebuild_embeddings(vault_id: VaultId): Promise<void>;
 }

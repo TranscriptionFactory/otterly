@@ -113,6 +113,7 @@ export function create_test_search_adapter(): SearchPort {
     },
 
     find_similar_notes: () => Promise.resolve([]),
+    semantic_search_batch: () => Promise.resolve([]),
     semantic_search: () => Promise.resolve([]),
     hybrid_search: () => Promise.resolve([]),
     get_embedding_status: () =>
