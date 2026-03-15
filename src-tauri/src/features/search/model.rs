@@ -7,6 +7,13 @@ pub struct SemanticSearchHit {
     pub distance: f32,
 }
 
+#[derive(Debug, Serialize, Clone)]
+pub struct BatchSemanticEdge {
+    pub source: String,
+    pub target: String,
+    pub distance: f32,
+}
+
 #[derive(Debug, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum HitSource {

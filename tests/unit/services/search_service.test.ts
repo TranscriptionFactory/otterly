@@ -91,6 +91,7 @@ describe("SearchService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -145,6 +146,7 @@ describe("SearchService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -198,6 +200,7 @@ describe("SearchService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -248,6 +251,7 @@ describe("SearchService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -305,6 +309,7 @@ describe("SearchService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -370,6 +375,7 @@ describe("SearchService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -436,6 +442,7 @@ describe("SearchService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -486,6 +493,7 @@ describe("SearchService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -548,6 +556,7 @@ describe("SearchService", () => {
         is_embedding: false,
       }),
       find_similar_notes: vi.fn().mockResolvedValue([]),
+      semantic_search_batch: vi.fn().mockResolvedValue([]),
       rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -637,6 +646,7 @@ describe("SearchService", () => {
           is_embedding: false,
         }),
         find_similar_notes: vi.fn().mockResolvedValue([]),
+        semantic_search_batch: vi.fn().mockResolvedValue([]),
         rebuild_embeddings: vi.fn().mockResolvedValue(undefined),
       };
     }

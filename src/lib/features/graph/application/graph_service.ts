@@ -2,14 +2,12 @@ import type { EditorStore } from "$lib/features/editor";
 import type { GraphPort } from "$lib/features/graph/ports";
 import type { GraphStore } from "$lib/features/graph/state/graph_store.svelte";
 import {
-  build_semantic_edges,
   SEMANTIC_EDGE_DISTANCE_THRESHOLD,
   SEMANTIC_EDGE_KNN_LIMIT,
   SEMANTIC_EDGE_MAX_VAULT_SIZE,
 } from "$lib/features/graph/domain/semantic_edges";
 import type { SearchPort } from "$lib/features/search";
 import type { VaultStore } from "$lib/features/vault";
-import type { SemanticSearchHit } from "$lib/shared/types/search";
 import { error_message } from "$lib/shared/utils/error_message";
 import { create_logger } from "$lib/shared/utils/logger";
 
@@ -189,38 +187,34 @@ export class GraphService {
     }
 
     const revision = ++this.semantic_load_revision;
+    const distance_cutoff =
+      threshold !== undefined
+        ? 1 - threshold
+        : SEMANTIC_EDGE_DISTANCE_THRESHOLD;
+    const paths = snapshot.nodes.map((n) => n.path);
 
-    const tasks = snapshot.nodes.map((node) =>
-      this.search_port
-        .find_similar_notes(vault_id, node.path, knn_limit, true)
-        .then((hits): [string, SemanticSearchHit[]] => [node.path, hits])
-        .catch((): [string, SemanticSearchHit[]] => [node.path, []]),
-    );
+    try {
+      const edges = await this.search_port.semantic_search_batch(
+        vault_id,
+        paths,
+        knn_limit,
+        distance_cutoff,
+      );
+      if (revision !== this.semantic_load_revision) return;
 
-    const settled = await Promise.allSettled(tasks);
-    if (revision !== this.semantic_load_revision) return;
+      log.info("Semantic edges loaded", {
+        notes_queried: paths.length,
+        edges_built: edges.length,
+        distance_cutoff,
+      });
 
-    const results = new Map<string, SemanticSearchHit[]>();
-    let notes_with_hits = 0;
-    for (const result of settled) {
-      if (result.status === "fulfilled") {
-        const [path, hits] = result.value;
-        results.set(path, hits);
-        if (hits.length > 0) notes_with_hits++;
-      }
+      this.graph_store.set_semantic_edges(edges);
+    } catch (error) {
+      if (revision !== this.semantic_load_revision) return;
+      log.error("Failed to load semantic edges", {
+        error: error_message(error),
+      });
     }
-
-    const distance_cutoff = threshold !== undefined ? 1 - threshold : undefined;
-    const edges = build_semantic_edges(results, distance_cutoff);
-
-    log.info("Semantic edges loaded", {
-      notes_queried: results.size,
-      notes_with_hits,
-      edges_built: edges.length,
-      distance_cutoff: distance_cutoff ?? SEMANTIC_EDGE_DISTANCE_THRESHOLD,
-    });
-
-    this.graph_store.set_semantic_edges(edges);
   }
 
   async toggle_semantic_edges(settings?: {

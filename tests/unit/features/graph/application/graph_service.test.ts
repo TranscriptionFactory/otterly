@@ -41,6 +41,7 @@ describe("GraphService", () => {
 
   const mock_search_port = {
     find_similar_notes: vi.fn().mockResolvedValue([]),
+    semantic_search_batch: vi.fn().mockResolvedValue([]),
   } as unknown as SearchPort;
 
   const graph_store = new GraphStore();
