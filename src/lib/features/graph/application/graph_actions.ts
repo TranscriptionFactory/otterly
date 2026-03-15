@@ -32,12 +32,9 @@ export function register_graph_actions(
 
   function close_graph(options: GraphCloseOptions = {}) {
     graph_service.close_panel();
-    if (options.preserve_context_rail) {
-      stores.ui.set_context_rail_tab("links");
-      return;
+    if (!options.preserve_context_rail && stores.ui.sidebar_view === "graph") {
+      stores.ui.sidebar_view = "explorer";
     }
-
-    stores.ui.close_context_rail("links");
   }
 
   registry.register({
@@ -45,12 +42,16 @@ export function register_graph_actions(
     label: "Toggle Graph Panel",
     shortcut: "CmdOrCtrl+Shift+G",
     execute: async () => {
-      if (graph_store.panel_open && stores.ui.context_rail_tab === "graph") {
+      if (
+        graph_store.panel_open &&
+        stores.ui.sidebar_open &&
+        stores.ui.sidebar_view === "graph"
+      ) {
         close_graph();
         return;
       }
 
-      stores.ui.set_context_rail_tab("graph");
+      stores.ui.set_sidebar_view("graph");
       await graph_service.focus_active_note();
     },
   });
@@ -67,7 +68,7 @@ export function register_graph_actions(
     id: ACTION_IDS.graph_focus_active_note,
     label: "Focus Active Note in Graph",
     execute: async () => {
-      stores.ui.set_context_rail_tab("graph");
+      stores.ui.set_sidebar_view("graph");
       await graph_service.focus_active_note();
     },
   });
