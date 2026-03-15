@@ -107,6 +107,69 @@ export class LinksService {
     }
   }
 
+  async load_related_notes(note_path: string): Promise<void> {
+    const vault_id = this.get_active_vault_id();
+    if (!vault_id) {
+      this.links_store.clear_related_notes();
+      return;
+    }
+
+    this.links_store.start_related_notes_load(note_path);
+
+    try {
+      const hits = await this.search_port.find_similar_notes(
+        vault_id,
+        note_path,
+        10,
+        false,
+      );
+      if (this.links_store.related_notes_note_path !== note_path) return;
+      this.links_store.set_related_notes(note_path, hits);
+    } catch (error) {
+      if (this.links_store.related_notes_note_path !== note_path) return;
+      const message = error_message(error);
+      log.error("Failed to load related notes", { error: message });
+      this.links_store.set_related_notes_error(note_path, message);
+    }
+  }
+
+  clear_related_notes() {
+    this.links_store.clear_related_notes();
+  }
+
+  async load_suggested_links(note_path: string): Promise<void> {
+    const vault_id = this.get_active_vault_id();
+    if (!vault_id) {
+      this.links_store.clear_suggested_links();
+      return;
+    }
+
+    this.links_store.start_suggested_links_load(note_path);
+
+    try {
+      const hits = await this.search_port.find_similar_notes(
+        vault_id,
+        note_path,
+        5,
+        true,
+      );
+      if (this.links_store.suggested_links_note_path !== note_path) return;
+      const suggested = hits
+        .map((hit) => ({ note: hit.note, similarity: 1 - hit.distance }))
+        .filter((s) => s.similarity > 0.5);
+      this.links_store.set_suggested_links(note_path, suggested);
+    } catch (error) {
+      if (this.links_store.suggested_links_note_path !== note_path) return;
+      const message = error_message(error);
+      log.error("Failed to load suggested links", { error: message });
+      this.links_store.clear_suggested_links();
+    }
+  }
+
+  clear_suggested_links() {
+    this.links_store.clear_suggested_links();
+  }
+
   clear() {
     this.active_revision += 1;
     this.active_local_revision += 1;

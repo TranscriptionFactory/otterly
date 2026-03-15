@@ -2,6 +2,7 @@
   import { ACTION_IDS } from "$lib/app";
   import { AiAssistantPanel } from "$lib/features/ai";
   import LinksPanel from "$lib/features/links/ui/links_panel.svelte";
+  import RelatedNotesPanel from "$lib/features/links/ui/related_notes_panel.svelte";
   import { OutlinePanel } from "$lib/features/outline";
   import { use_app_context } from "$lib/app/context/app_context.svelte";
 
@@ -10,6 +11,7 @@
   const tabs = [
     { id: "links" as const, label: "Links" },
     { id: "outline" as const, label: "Outline" },
+    { id: "related" as const, label: "Related" },
     { id: "ai" as const, label: "AI" },
   ];
 
@@ -50,6 +52,8 @@
       <LinksPanel />
     {:else if stores.ui.context_rail_tab === "outline"}
       <OutlinePanel />
+    {:else if stores.ui.context_rail_tab === "related"}
+      <RelatedNotesPanel />
     {:else if stores.ui.context_rail_tab === "ai"}
       <AiAssistantPanel />
     {/if}

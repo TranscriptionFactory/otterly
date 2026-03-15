@@ -33,7 +33,13 @@ type SidebarView =
   | "graph"
   | "tasks"
   | (string & {});
-type ContextRailTab = "links" | "outline" | "ai" | "graph" | "tasks";
+type ContextRailTab =
+  | "links"
+  | "outline"
+  | "ai"
+  | "graph"
+  | "tasks"
+  | "related";
 
 const INITIAL_DELETE_NOTE_DIALOG = { open: false, note: null } as const;
 
