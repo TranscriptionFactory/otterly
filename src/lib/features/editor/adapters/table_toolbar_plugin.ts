@@ -149,18 +149,22 @@ function toolbar_config(): Array<ToolbarButton | typeof SEPARATOR> {
   ];
 }
 
-const ALIGNMENTS: Array<{ label: string; icon: string; value: ColumnAlignment }> =
-  [
-    { label: "Align left", icon: "⫷", value: "left" },
-    { label: "Align center", icon: "⊟", value: "center" },
-    { label: "Align right", icon: "⫸", value: "right" },
-  ];
+const ALIGNMENTS: Array<{
+  label: string;
+  icon: string;
+  value: ColumnAlignment;
+}> = [
+  { label: "Align left", icon: "⫷", value: "left" },
+  { label: "Align center", icon: "⊟", value: "center" },
+  { label: "Align right", icon: "⫸", value: "right" },
+];
 
 type AlignmentButtonRefs = Map<ColumnAlignment, HTMLButtonElement>;
 
-function create_toolbar_dom(
-  view: EditorView,
-): { el: HTMLElement; align_btns: AlignmentButtonRefs } {
+function create_toolbar_dom(view: EditorView): {
+  el: HTMLElement;
+  align_btns: AlignmentButtonRefs;
+} {
   const toolbar = document.createElement("div");
   toolbar.className = "table-toolbar";
   toolbar.contentEditable = "false";
