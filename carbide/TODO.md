@@ -273,14 +273,14 @@
 
 > Detailed design in `carbide/scratch/scratch_highvalue.md` → Feature 4
 
-- [ ] Add `focus_mode` boolean to `UIStore`
-- [ ] Add `focus_mode_toggle` action in `ui_actions.ts`
-- [ ] Hotkey: `Cmd+Shift+Enter` to toggle
-- [ ] In `workspace_layout.svelte`: hide file tree + right panel with animated transition
-- [ ] Escape key exits focus mode (when focus is outside editor)
-- [ ] Exit focus mode on vault switch
-- [ ] Add to `COMMANDS_REGISTRY`: "Toggle Focus Mode"
-- [ ] Unit test for UIStore focus_mode toggle + reset on vault switch
+- [x] Add `focus_mode` boolean to `UIStore`
+- [x] Add `focus_mode_toggle` action in `ui_actions.ts`
+- [x] Hotkey: `Cmd+Shift+Enter` to toggle
+- [x] In `workspace_layout.svelte`: hide file tree + right panel with animated transition
+- [x] Escape key exits focus mode (when focus is outside editor)
+- [x] Exit focus mode on vault switch
+- [x] Add to `COMMANDS_REGISTRY`: "Toggle Focus Mode"
+- [x] Unit test for UIStore focus_mode toggle + reset on vault switch
 
 ---
 
@@ -347,8 +347,8 @@
 
 ### Remaining from Batches 1–2
 
-- [ ] Table cell alignment support (Milkdown GFM schema investigation needed)
-- [ ] Image width application to actual DOM (sets attr but needs CSS hookup)
+- [x] Table cell alignment support (Milkdown GFM schema investigation needed)
+- [x] Image width application to actual DOM (sets attr but needs CSS hookup)
 - [ ] Mermaid serial render queue + stale result guard
 - [ ] Mermaid theme re-render on color scheme change (MutationObserver)
 
