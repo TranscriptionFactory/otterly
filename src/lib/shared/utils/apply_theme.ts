@@ -2,9 +2,11 @@ import type { Theme } from "$lib/shared/types/theme";
 import { resolve_font_stack } from "$lib/shared/utils/theme_helpers";
 
 const SPACING_MAP: Record<string, string> = {
+  extra_compact: "0.75rem",
   compact: "1rem",
   normal: "1.5rem",
   spacious: "2rem",
+  extra_spacious: "2.5rem",
 };
 
 const HEADING_COLOR_MAP: Record<string, string> = {

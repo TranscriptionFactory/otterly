@@ -1,6 +1,11 @@
 export type ThemeColorScheme = "dark" | "light";
 
-export type ThemeSpacing = "compact" | "normal" | "spacious";
+export type ThemeSpacing =
+  | "extra_compact"
+  | "compact"
+  | "normal"
+  | "spacious"
+  | "extra_spacious";
 
 export type ThemeHeadingColor = "inherit" | "primary" | "accent";
 
