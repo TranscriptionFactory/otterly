@@ -136,6 +136,37 @@ Multi-format document viewing in the editor pane, dispatched by file extension.
 - Theme-aware background
 - Canvas feature slice architecture (CanvasPort, CanvasTauriAdapter, CanvasService, CanvasStore)
 
+## Metadata & Bases
+
+### Metadata cache
+
+- YAML frontmatter indexed into SQLite alongside search (derived, not authoritative)
+- `note_properties` table: per-note key-value pairs with type detection (string, number, boolean, date, json)
+- `note_tags` table: per-note tag index
+- Incremental updates on note create, modify, rename, delete
+- Per-note accessors (`get_note_properties`, `get_note_tags`) for downstream consumers (graph, tasks, plugins)
+- Batch query (`list_all_properties`) for property discovery
+
+### Properties widget (Visual Frontmatter)
+
+- Interactive key-value grid rendered as a Milkdown NodeView
+- Type-aware editors: boolean toggle (Switch), number input, date picker, text input
+- Pill-based tag editor with inline add/remove
+- Two-way sync between Svelte widget and ProseMirror YAML state
+- Graceful degradation on malformed YAML (error state with raw text fallback)
+- Source mode: widget auto-destroyed, raw YAML fences shown
+
+### Bases
+
+- Dedicated feature slice: ports, store, service, adapter, panel, table
+- Query model: property equality, contains, numeric/date comparison (gt, lt, gte, lte, neq)
+- Tag filters
+- Sort by properties or built-in columns (title, mtime_ms)
+- Table and list view modes
+- Pagination (limit + offset)
+- `.base` view persistence (save/load JSON definitions)
+- Auto-refresh on vault change via reactor
+
 ## macOS integration
 
 - Registered as default app for `.md`, `.markdown`, `.mdx`
