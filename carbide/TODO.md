@@ -15,11 +15,11 @@
 
 ## Cross-cutting badgerly-carbide compatibility guardrails
 
-- [ ] Keep note storage Obsidian-flavored Markdown and add a WYSIWYG table editing helper instead of inventing a proprietary table format
-- [ ] Keep JSON Canvas explicitly on the roadmap as a storage format, while shipping Excalidraw-only canvas support for now
+- [x] Keep note storage Obsidian-flavored Markdown and add a WYSIWYG table editing helper instead of inventing a proprietary table format
+- [x] Keep JSON Canvas explicitly on the roadmap as a storage format, while shipping Excalidraw-only canvas support for now
 - [ ] Build a vault-wide alphanumeric suffix-link index with rename-safe backlink rewrites and homonym disambiguation via shortest required prefixes plus synced filename aliases
-- [ ] Preserve single-root vault scope; do not support broadening a vault by wrapping multiple independent vaults in one parent directory
-- [ ] Evaluate optional ecosystem features: cross-platform support, P2P sync/collab, secondary YAML metadata, metadata views (graph/base/orphans/homonyms), and icon-enhanced links/file explorer
+- [x] Preserve single-root vault scope; do not support broadening a vault by wrapping multiple independent vaults in one parent directory
+- [~] Evaluate optional ecosystem features: cross-platform support, P2P sync/collab, secondary YAML metadata, metadata views (graph/base/orphans/homonyms), and icon-enhanced links/file explorer — metadata views (graph + bases) shipped; remaining items deferred
 
 ---
 
@@ -187,6 +187,51 @@
 - [ ] Integration test for ahead/behind counting against a real remote
 - [ ] Test push/pull with SSH remote
 - [ ] Test auto-commit on save / interval
+
+---
+
+## Phase 3M: Metadata Cache & Frontmatter (from implementation roadmap Phase 3)
+
+> Implementation spec: `carbide/implementation/phase3_metadata_and_bases.md`
+> Not to be confused with TODO Phase 3 (macOS Default App Registration).
+
+### Phase 3A: Metadata Index (Backend) — COMPLETED
+
+- [x] Frontmatter parsing (`src-tauri/src/features/search/frontmatter.rs`)
+- [x] `note_properties` and `note_tags` SQLite tables with indexes
+- [x] Incremental update on upsert, rename, delete
+- [x] Date type inference (`is_iso_date`) for ISO date/datetime strings
+- [x] Per-note accessors: `get_note_properties()`, `get_note_tags()`
+- [x] Batch query: `list_all_properties()`, `query_bases()`
+
+### Phase 3A: Properties Widget (Frontend) — COMPLETED
+
+- [x] `frontmatter_widget.svelte` — interactive key-value grid
+- [x] `frontmatter_plugin.ts` — Milkdown NodeView for YAML blocks
+- [x] Two-way sync (widget ↔ ProseMirror transactions)
+- [x] Type-aware editors (boolean switch, number input, date picker, string)
+- [x] Inline tag input (replaces `prompt()`)
+- [x] Graceful degradation on malformed YAML
+- [x] Source mode fallback via NodeView lifecycle
+
+### Phase 3B: Bases Query Surface — COMPLETED
+
+- [x] `src-tauri/src/features/bases/` (mod, service, types)
+- [x] Frontend bases slice (ports, store, service, adapter, panel, table)
+- [x] Integration points wired (stores, ports, context, Tauri commands)
+- [x] `bases_refresh.reactor` syncs on vault change
+- [ ] UI tests for table and list rendering (deferred — requires browser environment)
+
+### Testing — COMPLETED
+
+- [x] Frontmatter parsing tests (13 tests)
+- [x] Incremental update tests: create, modify, rename, delete (6 tests)
+- [x] Property normalization tests: string, number, boolean, json, date (9 tests)
+- [x] `query_bases` tests: filters, sort, pagination, combined (12 tests)
+- [x] Per-note accessor tests (4 tests)
+- [x] Frontend: frontmatter widget logic tests (14 tests)
+- [x] Frontend: bases store tests (10 tests)
+- [x] Frontend: bases service tests (11 tests)
 
 ---
 

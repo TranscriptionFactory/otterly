@@ -221,3 +221,19 @@ This phase is done when:
 - Bases has a dedicated feature surface on the frontend
 - property queries are deterministic and test-covered
 - graph and later task work can reuse the metadata index instead of rebuilding it
+
+## Implementation status — COMPLETED (2026-03-16)
+
+All four criteria met:
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| Metadata indexed through search cache | Done | `note_properties` + `note_tags` tables in `db.rs`, incremental upsert/rename/delete |
+| Bases dedicated frontend surface | Done | Full slice at `src/lib/features/bases/` with store, service, ports, adapter, panel, table |
+| Property queries test-covered | Done | 36 Rust tests (parsing, updates, normalization, query_bases) + 35 frontend tests (widget, store, service) |
+| Downstream reuse without rebuild | Done | `get_note_properties()` + `get_note_tags()` per-note accessors; `list_all_properties()` for discovery |
+
+Additional work beyond original spec:
+- Date type inference (`is_iso_date`) for ISO date/datetime strings
+- Type-aware property editors in frontmatter widget (boolean switch, number input, date picker)
+- Inline tag input replacing `prompt()` dialog
