@@ -76,9 +76,11 @@
   ];
 
   const spacing_options = [
+    { value: "extra_compact", label: "Extra Compact" },
     { value: "compact", label: "Compact" },
     { value: "normal", label: "Normal" },
     { value: "spacious", label: "Spacious" },
+    { value: "extra_spacious", label: "Extra Spacious" },
   ];
 
   const heading_color_options = [
@@ -448,8 +450,8 @@
         type="single"
         value={line_height}
         onValueChange={(v: number) => update("line_height", v)}
-        min={1.5}
-        max={2.0}
+        min={1.35}
+        max={2.1}
         step={0.05}
         class="w-full"
         disabled={locked}
