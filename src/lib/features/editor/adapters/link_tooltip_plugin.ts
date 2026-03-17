@@ -1,14 +1,7 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey, TextSelection } from "@milkdown/kit/prose/state";
-import type {
-  Mark,
-  MarkType,
-  Node as ProseNode,
-} from "@milkdown/kit/prose/model";
-import type { EditorView } from "@milkdown/kit/prose/view";
-import { linkSchema } from "@milkdown/kit/preset/commonmark";
-import { TooltipProvider } from "@milkdown/kit/plugin/tooltip";
-import { posToDOMRect } from "@milkdown/kit/prose";
+import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
+import type { Mark, MarkType, Node as ProseNode } from "prosemirror-model";
+import type { EditorView } from "prosemirror-view";
+import { computePosition, flip, shift, offset } from "@floating-ui/dom";
 import { Check, Link, Pencil, Trash2 } from "lucide-static";
 import { build_link_edit_transaction } from "./link_edit_transaction";
 
@@ -32,6 +25,16 @@ interface LinkInfo {
   from: number;
   to: number;
   display_text: string;
+}
+
+function pos_to_dom_rect(view: EditorView, from: number, to: number): DOMRect {
+  const start = view.coordsAtPos(from);
+  const end = view.coordsAtPos(to);
+  const top = Math.min(start.top, end.top);
+  const bottom = Math.max(start.bottom, end.bottom);
+  const left = Math.min(start.left, end.left);
+  const right = Math.max(start.right, end.right);
+  return new DOMRect(left, top, right - left, bottom - top);
 }
 
 function find_link_at_event(
@@ -184,218 +187,223 @@ function build_edit_dom(callbacks: {
   return { root, text_input, link_input };
 }
 
-export function create_link_tooltip_plugin() {
-  return $prose((ctx) => {
-    const link_type = linkSchema.type(ctx);
-    return new Plugin({
-      key: link_tooltip_plugin_key,
-      view(editor_view) {
-        let mode: "idle" | "preview" | "edit" = "idle";
-        let current_link: LinkInfo | null = null;
-        let hovering_tooltip = false;
+function show_floating(
+  container: HTMLElement,
+  reference: { getBoundingClientRect: () => DOMRect },
+) {
+  container.style.display = "block";
+  container.style.position = "fixed";
+  container.style.zIndex = "9999";
 
-        const preview_container = document.createElement("div");
-        preview_container.className = "milkdown-link-preview";
+  const virtual_el = {
+    getBoundingClientRect: reference.getBoundingClientRect,
+  };
 
-        const edit_container = document.createElement("div");
-        edit_container.className = "milkdown-link-edit";
+  void computePosition(virtual_el as Element, container, {
+    placement: "bottom-start",
+    middleware: [offset(6), flip(), shift({ padding: 8 })],
+  }).then(({ x, y }) => {
+    container.style.left = `${String(x)}px`;
+    container.style.top = `${String(y)}px`;
+  });
+}
 
-        const enter_edit_mode = () => {
-          if (!current_link) return;
-          mode = "edit";
+function hide_floating(container: HTMLElement) {
+  container.style.display = "none";
+}
 
-          edit_dom.text_input.value = current_link.display_text;
-          edit_dom.link_input.value = String(
-            current_link.mark.attrs.href ?? "",
-          );
+export function create_link_tooltip_prose_plugin(link_type: MarkType): Plugin {
+  return new Plugin({
+    key: link_tooltip_plugin_key,
+    view(editor_view) {
+      let mode: "idle" | "preview" | "edit" = "idle";
+      let current_link: LinkInfo | null = null;
+      let hovering_tooltip = false;
 
-          const edit_from = current_link.from;
-          const edit_to = current_link.to;
+      const preview_container = document.createElement("div");
+      preview_container.className = "milkdown-link-preview";
+      preview_container.style.display = "none";
+      document.body.appendChild(preview_container);
 
-          preview_provider.hide();
-          edit_provider.show(
-            {
-              getBoundingClientRect: () =>
-                posToDOMRect(editor_view, edit_from, edit_to),
-            },
-            editor_view,
-          );
+      const edit_container = document.createElement("div");
+      edit_container.className = "milkdown-link-edit";
+      edit_container.style.display = "none";
+      document.body.appendChild(edit_container);
 
-          requestAnimationFrame(() => {
-            edit_dom.text_input.focus();
-            edit_dom.text_input.select();
-          });
-        };
+      const enter_edit_mode = () => {
+        if (!current_link) return;
+        mode = "edit";
 
-        const confirm_edit = () => {
-          if (!current_link) {
-            reset();
-            return;
-          }
+        edit_dom.text_input.value = current_link.display_text;
+        edit_dom.link_input.value = String(current_link.mark.attrs.href ?? "");
 
-          const new_href = edit_dom.link_input.value.trim();
-          const raw_text = edit_dom.text_input.value.trim();
+        const edit_from = current_link.from;
+        const edit_to = current_link.to;
 
-          if (!raw_text && !new_href) {
-            reset();
-            return;
-          }
+        hide_floating(preview_container);
+        show_floating(edit_container, {
+          getBoundingClientRect: () =>
+            pos_to_dom_rect(editor_view, edit_from, edit_to),
+        });
 
-          const new_text = raw_text || new_href;
-          const { from, to, mark } = current_link;
-          const old_href = (mark.attrs.href as string) ?? "";
+        requestAnimationFrame(() => {
+          edit_dom.text_input.focus();
+          edit_dom.text_input.select();
+        });
+      };
 
-          const { state } = editor_view;
-
-          const tr = build_link_edit_transaction(state, link_type, {
-            from,
-            to,
-            old_display_text: current_link.display_text,
-            old_href,
-            new_display_text: new_text,
-            new_href,
-          });
-
-          if (tr) editor_view.dispatch(tr);
+      const confirm_edit = () => {
+        if (!current_link) {
           reset();
-        };
+          return;
+        }
 
-        const remove_link = () => {
-          if (!current_link) return;
-          const { from, to } = current_link;
-          const { state } = editor_view;
-          const tr = state.tr;
-          tr.removeMark(from, to, link_type);
-          editor_view.dispatch(tr);
+        const new_href = edit_dom.link_input.value.trim();
+        const raw_text = edit_dom.text_input.value.trim();
+
+        if (!raw_text && !new_href) {
           reset();
-        };
+          return;
+        }
 
-        const reset = () => {
-          mode = "idle";
-          current_link = null;
-          hovering_tooltip = false;
-          preview_provider.hide();
-          edit_provider.hide();
-        };
+        const new_text = raw_text || new_href;
+        const { from, to, mark } = current_link;
+        const old_href = (mark.attrs.href as string) ?? "";
 
-        const copy_link = () => {
-          if (!current_link) return;
-          const href = String(current_link.mark.attrs.href ?? "");
-          if (href) void navigator.clipboard.writeText(href).catch(() => {});
-        };
+        const { state } = editor_view;
 
-        const preview_dom = build_preview_dom({
-          on_copy: copy_link,
-          on_edit: enter_edit_mode,
-          on_remove: remove_link,
+        const tr = build_link_edit_transaction(state, link_type, {
+          from,
+          to,
+          old_display_text: current_link.display_text,
+          old_href,
+          new_display_text: new_text,
+          new_href,
         });
-        preview_container.appendChild(preview_dom.root);
 
-        const edit_dom = build_edit_dom({
-          on_confirm: confirm_edit,
-          on_cancel: reset,
-        });
-        edit_container.appendChild(edit_dom.root);
+        if (tr) editor_view.dispatch(tr);
+        reset();
+      };
 
-        const preview_provider = new TooltipProvider({
-          content: preview_container,
-          debounce: 0,
-          shouldShow: () => false,
-        });
-        preview_provider.update(editor_view);
+      const remove_link = () => {
+        if (!current_link) return;
+        const { from, to } = current_link;
+        const { state } = editor_view;
+        const tr = state.tr;
+        tr.removeMark(from, to, link_type);
+        editor_view.dispatch(tr);
+        reset();
+      };
 
-        const edit_provider = new TooltipProvider({
-          content: edit_container,
-          debounce: 0,
-          shouldShow: () => false,
-        });
-        edit_provider.onHide = () => {
+      const reset = () => {
+        mode = "idle";
+        current_link = null;
+        hovering_tooltip = false;
+        hide_floating(preview_container);
+        hide_floating(edit_container);
+      };
+
+      const copy_link = () => {
+        if (!current_link) return;
+        const href = String(current_link.mark.attrs.href ?? "");
+        if (href) void navigator.clipboard.writeText(href).catch(() => {});
+      };
+
+      const preview_dom = build_preview_dom({
+        on_copy: copy_link,
+        on_edit: enter_edit_mode,
+        on_remove: remove_link,
+      });
+      preview_container.appendChild(preview_dom.root);
+
+      const edit_dom = build_edit_dom({
+        on_confirm: confirm_edit,
+        on_cancel: reset,
+      });
+      edit_container.appendChild(edit_dom.root);
+
+      edit_container.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
           requestAnimationFrame(() => {
             editor_view.dom.focus({ preventScroll: true });
           });
-        };
-        edit_provider.update(editor_view);
-
-        preview_container.addEventListener("mouseenter", () => {
-          hovering_tooltip = true;
-        });
-        preview_container.addEventListener("mouseleave", () => {
-          hovering_tooltip = false;
-        });
-
-        const HOVER_DELAY = 50;
-        let hover_timer: ReturnType<typeof setTimeout> | null = null;
-
-        function schedule_hover(fn: () => void) {
-          if (hover_timer !== null) clearTimeout(hover_timer);
-          hover_timer = setTimeout(() => {
-            hover_timer = null;
-            fn();
-          }, HOVER_DELAY);
         }
+      });
 
-        const on_mousemove = (event: MouseEvent) => {
-          if (mode === "edit") return;
-          if (!editor_view.hasFocus()) return;
+      preview_container.addEventListener("mouseenter", () => {
+        hovering_tooltip = true;
+      });
+      preview_container.addEventListener("mouseleave", () => {
+        hovering_tooltip = false;
+      });
 
-          schedule_hover(() => {
-            const info = find_link_at_event(editor_view, event, link_type);
-            if (info) {
-              current_link = info;
-              mode = "preview";
-              preview_dom.link_display_el.textContent = String(
-                info.mark.attrs.href ?? "",
-              );
-              preview_provider.show(
-                {
-                  getBoundingClientRect: () =>
-                    posToDOMRect(editor_view, info.from, info.to),
-                },
-                editor_view,
-              );
-            } else if (!hovering_tooltip && mode === "preview") {
-              reset();
-            }
-          });
-        };
+      const HOVER_DELAY = 50;
+      let hover_timer: ReturnType<typeof setTimeout> | null = null;
 
-        const on_mouseleave = () => {
-          if (mode === "edit") return;
-          schedule_hover(() => {
-            if (!hovering_tooltip && mode === "preview") reset();
-          });
-        };
+      function schedule_hover(fn: () => void) {
+        if (hover_timer !== null) clearTimeout(hover_timer);
+        hover_timer = setTimeout(() => {
+          hover_timer = null;
+          fn();
+        }, HOVER_DELAY);
+      }
 
-        editor_view.dom.addEventListener("mousemove", on_mousemove);
-        editor_view.dom.addEventListener("mouseleave", on_mouseleave);
+      const on_mousemove = (event: MouseEvent) => {
+        if (mode === "edit") return;
+        if (!editor_view.hasFocus()) return;
 
-        return {
-          update(view: EditorView) {
-            if (mode !== "edit") return;
-            if (!current_link) return;
-
-            const { state } = view;
-            const { selection } = state;
-            if (!(selection instanceof TextSelection)) return;
-            const { from, to } = selection;
-            if (from === current_link.from && to === current_link.to) return;
-
+        schedule_hover(() => {
+          const info = find_link_at_event(editor_view, event, link_type);
+          if (info) {
+            current_link = info;
+            mode = "preview";
+            preview_dom.link_display_el.textContent = String(
+              info.mark.attrs.href ?? "",
+            );
+            show_floating(preview_container, {
+              getBoundingClientRect: () =>
+                pos_to_dom_rect(editor_view, info.from, info.to),
+            });
+          } else if (!hovering_tooltip && mode === "preview") {
             reset();
-          },
-          destroy() {
-            if (hover_timer !== null) {
-              clearTimeout(hover_timer);
-              hover_timer = null;
-            }
-            editor_view.dom.removeEventListener("mousemove", on_mousemove);
-            editor_view.dom.removeEventListener("mouseleave", on_mouseleave);
-            preview_provider.destroy();
-            edit_provider.destroy();
-            preview_container.remove();
-            edit_container.remove();
-          },
-        };
-      },
-    });
+          }
+        });
+      };
+
+      const on_mouseleave = () => {
+        if (mode === "edit") return;
+        schedule_hover(() => {
+          if (!hovering_tooltip && mode === "preview") reset();
+        });
+      };
+
+      editor_view.dom.addEventListener("mousemove", on_mousemove);
+      editor_view.dom.addEventListener("mouseleave", on_mouseleave);
+
+      return {
+        update(view: EditorView) {
+          if (mode !== "edit") return;
+          if (!current_link) return;
+
+          const { state } = view;
+          const { selection } = state;
+          if (!(selection instanceof TextSelection)) return;
+          const { from, to } = selection;
+          if (from === current_link.from && to === current_link.to) return;
+
+          reset();
+        },
+        destroy() {
+          if (hover_timer !== null) {
+            clearTimeout(hover_timer);
+            hover_timer = null;
+          }
+          editor_view.dom.removeEventListener("mousemove", on_mousemove);
+          editor_view.dom.removeEventListener("mouseleave", on_mouseleave);
+          preview_container.remove();
+          edit_container.remove();
+        },
+      };
+    },
   });
 }

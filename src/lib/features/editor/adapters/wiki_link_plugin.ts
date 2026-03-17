@@ -1,11 +1,5 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey, TextSelection } from "@milkdown/kit/prose/state";
-import type {
-  MarkType,
-  Node as ProseNode,
-  Mark,
-} from "@milkdown/kit/prose/model";
-import { linkSchema } from "@milkdown/kit/preset/commonmark";
+import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
+import type { MarkType, Node as ProseNode, Mark } from "prosemirror-model";
 import { format_wiki_display } from "$lib/features/editor/domain/wiki_link";
 import type { InternalLinkSource } from "$lib/features/editor/ports";
 import { dirty_state_plugin_key } from "./dirty_state_plugin";
@@ -365,20 +359,3 @@ export function create_wiki_link_click_prose_plugin(input: {
     },
   });
 }
-
-export const create_wiki_link_converter_plugin = () =>
-  $prose((ctx) => {
-    const link_type = linkSchema.type(ctx);
-    return create_wiki_link_converter_prose_plugin({
-      link_type,
-    });
-  });
-
-export const create_wiki_link_click_plugin = (input: {
-  on_internal_link_click: (
-    raw_path: string,
-    base_note_path: string,
-    source: InternalLinkSource,
-  ) => void;
-  on_external_link_click: (url: string) => void;
-}) => $prose(() => create_wiki_link_click_prose_plugin(input));

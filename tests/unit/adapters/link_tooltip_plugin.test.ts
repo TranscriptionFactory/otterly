@@ -1,11 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import { EditorState } from "@milkdown/kit/prose/state";
-import type {
-  MarkType,
-  Node as ProseNode,
-  Mark,
-} from "@milkdown/kit/prose/model";
+import { Schema } from "prosemirror-model";
+import { EditorState } from "prosemirror-state";
+import type { MarkType, Node as ProseNode, Mark } from "prosemirror-model";
 import { build_link_edit_transaction } from "$lib/features/editor/adapters/link_edit_transaction";
 
 function create_schema() {

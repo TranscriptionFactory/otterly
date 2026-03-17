@@ -8,7 +8,7 @@ export type {
   EditorPort,
   InternalLinkSource,
 } from "$lib/features/editor/ports";
-export { create_lazy_milkdown_editor_port as create_milkdown_editor_port } from "$lib/features/editor/adapters/lazy_milkdown_adapter";
+export { create_lazy_editor_port as create_milkdown_editor_port } from "$lib/features/editor/adapters/lazy_editor_adapter";
 export { default as EditorStatusBar } from "$lib/features/editor/ui/editor_status_bar.svelte";
 export { default as SourceEditor } from "$lib/features/editor/ui/source_editor.svelte";
 export type { EditorMode } from "$lib/features/editor/domain/editor_mode";

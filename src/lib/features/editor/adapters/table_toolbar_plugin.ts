@@ -1,7 +1,6 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import type { EditorView } from "@milkdown/kit/prose/view";
-import type { ResolvedPos } from "@milkdown/kit/prose/model";
+import { Plugin, PluginKey } from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
+import type { ResolvedPos } from "prosemirror-model";
 import {
   addColumnAfter,
   addColumnBefore,
@@ -12,7 +11,7 @@ import {
   findTable,
   TableMap,
   selectionCell,
-} from "@milkdown/kit/prose/tables";
+} from "prosemirror-tables";
 import {
   compute_floating_position,
   create_backdrop,
@@ -228,7 +227,7 @@ function update_alignment_buttons(
 
 export const table_toolbar_plugin_key = new PluginKey("table-toolbar");
 
-export const table_toolbar_plugin = $prose(() => {
+export function create_table_toolbar_prose_plugin(): Plugin {
   let toolbar_el: HTMLElement | null = null;
   let backdrop_el: HTMLElement | null = null;
   let align_btn_refs: AlignmentButtonRefs | null = null;
@@ -290,4 +289,4 @@ export const table_toolbar_plugin = $prose(() => {
       };
     },
   });
-});
+}

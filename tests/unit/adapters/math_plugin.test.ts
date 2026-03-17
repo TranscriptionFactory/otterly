@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import { EditorState } from "@milkdown/kit/prose/state";
+import { Schema } from "prosemirror-model";
+import { EditorState } from "prosemirror-state";
 import {
   extract_slash_query_from_state,
   filter_commands,

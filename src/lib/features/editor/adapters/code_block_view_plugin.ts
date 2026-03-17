@@ -1,7 +1,6 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import type { Node as ProseNode } from "@milkdown/kit/prose/model";
-import type { EditorView, NodeView } from "@milkdown/kit/prose/view";
+import { Plugin, PluginKey } from "prosemirror-state";
+import type { Node as ProseNode } from "prosemirror-model";
+import type { EditorView, NodeView } from "prosemirror-view";
 import { Check, Copy } from "lucide-static";
 import { find_language_label, search_languages } from "./language_registry";
 import { LruCache } from "$lib/shared/utils/lru_cache";
@@ -392,15 +391,14 @@ class CodeBlockView implements NodeView {
 
 export const code_block_view_plugin_key = new PluginKey("code-block-view");
 
-export const code_block_view_plugin = $prose(
-  () =>
-    new Plugin({
-      key: code_block_view_plugin_key,
-      props: {
-        nodeViews: {
-          code_block: (node, view, get_pos) =>
-            new CodeBlockView(node, view, get_pos),
-        },
+export function create_code_block_view_prose_plugin(): Plugin {
+  return new Plugin({
+    key: code_block_view_plugin_key,
+    props: {
+      nodeViews: {
+        code_block: (node, view, get_pos) =>
+          new CodeBlockView(node, view, get_pos),
       },
-    }),
-);
+    },
+  });
+}

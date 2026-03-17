@@ -1,5 +1,4 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin } from "@milkdown/kit/prose/state";
+import { Plugin } from "prosemirror-state";
 import type { PastedImagePayload } from "$lib/shared/types/editor";
 
 function first_image_file(data: DataTransfer | null): File | null {
@@ -15,39 +14,36 @@ function first_image_file(data: DataTransfer | null): File | null {
   return null;
 }
 
-export function create_image_paste_plugin(
+export function create_image_paste_prose_plugin(
   on_image_paste_requested: (payload: PastedImagePayload) => void,
-) {
-  return $prose(
-    () =>
-      new Plugin({
-        props: {
-          handlePaste: (view, event) => {
-            const editable = view.props.editable?.(view.state);
-            if (!editable) return false;
+): Plugin {
+  return new Plugin({
+    props: {
+      handlePaste: (view, event) => {
+        const editable = view.props.editable?.(view.state);
+        if (!editable) return false;
 
-            const current_node = view.state.selection.$from.node();
-            if (current_node.type.spec.code) return false;
+        const current_node = view.state.selection.$from.node();
+        if (current_node.type.spec.code) return false;
 
-            const file = first_image_file(event.clipboardData);
-            if (!file) return false;
+        const file = first_image_file(event.clipboardData);
+        if (!file) return false;
 
-            event.preventDefault();
+        event.preventDefault();
 
-            void file
-              .arrayBuffer()
-              .then((buffer) => {
-                on_image_paste_requested({
-                  bytes: new Uint8Array(buffer),
-                  mime_type: file.type || "application/octet-stream",
-                  file_name: file.name || null,
-                });
-              })
-              .catch(() => {});
+        void file
+          .arrayBuffer()
+          .then((buffer) => {
+            on_image_paste_requested({
+              bytes: new Uint8Array(buffer),
+              mime_type: file.type || "application/octet-stream",
+              file_name: file.name || null,
+            });
+          })
+          .catch(() => {});
 
-            return true;
-          },
-        },
-      }),
-  );
+        return true;
+      },
+    },
+  });
 }

@@ -1,10 +1,10 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin } from "@milkdown/kit/prose/state";
-import { Slice } from "@milkdown/kit/prose/model";
-import { parserCtx } from "@milkdown/kit/core";
+import { Plugin } from "prosemirror-state";
+import { Slice } from "prosemirror-model";
 import { pick_paste_mode } from "./markdown_paste_utils";
 
-export const markdown_paste_plugin = $prose((ctx) => {
+export function create_markdown_paste_prose_plugin(
+  parse_fn: (markdown: string) => { content: Slice["content"] },
+): Plugin {
   return new Plugin({
     props: {
       handlePaste: (view, event) => {
@@ -27,10 +27,9 @@ export const markdown_paste_plugin = $prose((ctx) => {
         ).replace(/\r\n/g, "\n");
         if (source.trim() === "") return false;
 
-        const parser = ctx.get(parserCtx);
-        let doc: ReturnType<typeof parser>;
+        let doc: ReturnType<typeof parse_fn>;
         try {
-          doc = parser(source);
+          doc = parse_fn(source);
         } catch {
           return false;
         }
@@ -42,4 +41,4 @@ export const markdown_paste_plugin = $prose((ctx) => {
       },
     },
   });
-});
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import { EditorState, TextSelection } from "@milkdown/kit/prose/state";
-import type { EditorView } from "@milkdown/kit/prose/view";
+import { Schema } from "prosemirror-model";
+import { EditorState, TextSelection } from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
 import { create_paired_delimiter_prose_plugin } from "$lib/features/editor/adapters/paired_delimiter_plugin";
 import { describe_suggestion_location } from "$lib/features/editor/adapters/wiki_suggest_plugin";
 

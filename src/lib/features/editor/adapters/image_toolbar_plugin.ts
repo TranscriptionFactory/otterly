@@ -1,6 +1,5 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import type { EditorView } from "@milkdown/kit/prose/view";
+import { Plugin, PluginKey } from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
 import {
   compute_floating_position,
   create_backdrop,
@@ -45,7 +44,7 @@ function create_resize_toolbar(
 
 export const image_toolbar_plugin_key = new PluginKey("image-toolbar");
 
-export const image_toolbar_plugin = $prose(() => {
+export function create_image_toolbar_prose_plugin(): Plugin {
   let toolbar_el: HTMLElement | null = null;
   let backdrop_el: HTMLElement | null = null;
 
@@ -116,4 +115,4 @@ export const image_toolbar_plugin = $prose(() => {
       };
     },
   });
-});
+}

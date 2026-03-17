@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import type { Node as ProseNode } from "@milkdown/kit/prose/model";
+import { Schema } from "prosemirror-model";
+import type { Node as ProseNode } from "prosemirror-model";
 import { extract_headings } from "$lib/features/editor/adapters/outline_plugin";
 
 function create_schema_with_headings() {

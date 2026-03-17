@@ -6,15 +6,15 @@ type ResolveAssetUrlForVault = (
   asset_path: AssetPath,
 ) => string | Promise<string>;
 
-export function create_lazy_milkdown_editor_port(args?: {
+export function create_lazy_editor_port(args?: {
   resolve_asset_url_for_vault?: ResolveAssetUrlForVault;
 }): EditorPort {
   let port_promise: Promise<EditorPort> | null = null;
 
   const load_port = (): Promise<EditorPort> =>
     (port_promise ??=
-      import("$lib/features/editor/adapters/milkdown_adapter").then((mod) =>
-        mod.create_milkdown_editor_port(args),
+      import("$lib/features/editor/adapters/prosemirror_adapter").then((mod) =>
+        mod.create_prosemirror_editor_port(args),
       ));
 
   return {

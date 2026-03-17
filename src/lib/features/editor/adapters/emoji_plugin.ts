@@ -1,5 +1,4 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { get } from "node-emoji";
 
 const SHORTCODE_REGEX = /^[a-zA-Z0-9_+-]+$/;
@@ -23,54 +22,53 @@ export function extract_emoji_shortcode(
 
 export const emoji_plugin_key = new PluginKey("emoji-shortcode");
 
-export const emoji_plugin = $prose(
-  () =>
-    new Plugin({
-      key: emoji_plugin_key,
-      props: {
-        handleTextInput(view, from, to, text) {
-          if (text !== ":") return false;
+export function create_emoji_prose_plugin(): Plugin {
+  return new Plugin({
+    key: emoji_plugin_key,
+    props: {
+      handleTextInput(view, from, to, text) {
+        if (text !== ":") return false;
 
-          const { state } = view;
-          const $from = state.doc.resolve(from);
+        const { state } = view;
+        const $from = state.doc.resolve(from);
 
-          if ($from.parent.type.name === "code_block") return false;
-          if (
-            $from
-              .marks()
-              .some(
-                (m) => m.type.name === "code_inline" || m.type.name === "code",
-              )
-          )
-            return false;
+        if ($from.parent.type.name === "code_block") return false;
+        if (
+          $from
+            .marks()
+            .some(
+              (m) => m.type.name === "code_inline" || m.type.name === "code",
+            )
+        )
+          return false;
 
-          const text_before = $from.parent.textBetween(
-            0,
-            $from.parentOffset,
-            undefined,
-            "\ufffc",
-          );
+        const text_before = $from.parent.textBetween(
+          0,
+          $from.parentOffset,
+          undefined,
+          "\ufffc",
+        );
 
-          const match = extract_emoji_shortcode(
-            text_before + ":",
-            text_before.length + 1,
-          );
-          if (!match) return false;
+        const match = extract_emoji_shortcode(
+          text_before + ":",
+          text_before.length + 1,
+        );
+        if (!match) return false;
 
-          const emoji = get(match.shortcode);
-          if (!emoji) return false;
+        const emoji = get(match.shortcode);
+        if (!emoji) return false;
 
-          const parent_start = $from.start();
-          const replace_from = parent_start + match.from;
-          const replace_to = to;
-          const tr = state.tr.replaceWith(
-            replace_from,
-            replace_to,
-            state.schema.text(emoji),
-          );
-          view.dispatch(tr);
-          return true;
-        },
+        const parent_start = $from.start();
+        const replace_from = parent_start + match.from;
+        const replace_to = to;
+        const tr = state.tr.replaceWith(
+          replace_from,
+          replace_to,
+          state.schema.text(emoji),
+        );
+        view.dispatch(tr);
+        return true;
       },
-    }),
-);
+    },
+  });
+}

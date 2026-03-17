@@ -1,5 +1,4 @@
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import { $prose } from "@milkdown/kit/utils";
+import { Plugin, PluginKey } from "prosemirror-state";
 
 export type EditorContextState = {
   note_path: string;
@@ -42,5 +41,8 @@ export function create_editor_context_prose_plugin(
   });
 }
 
-export const create_editor_context_plugin = (initial: EditorContextState) =>
-  $prose(() => create_editor_context_prose_plugin(initial));
+export function create_editor_context_plugin_instance(
+  config: EditorContextState,
+): Plugin<EditorContextState> {
+  return create_editor_context_prose_plugin(config);
+}

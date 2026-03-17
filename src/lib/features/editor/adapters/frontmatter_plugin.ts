@@ -1,45 +1,8 @@
-import { $node, $prose } from "@milkdown/kit/utils";
-import { type NodeView, type EditorView } from "@milkdown/kit/prose/view";
-import { type Node as ProseNode } from "@milkdown/kit/prose/model";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
+import { type NodeView, type EditorView } from "prosemirror-view";
+import { type Node as ProseNode } from "prosemirror-model";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { mount, unmount } from "svelte";
 import FrontmatterWidget from "../ui/frontmatter_widget.svelte";
-
-export const frontmatter_node = $node("frontmatter", () => ({
-  group: "block",
-  content: "text*",
-  code: true,
-  defining: true,
-  attrs: {},
-  parseMarkdown: {
-    match: (node) => node.type === "yaml",
-    runner: (state, node, type) => {
-      state.openNode(type);
-      if (node.value) {
-        state.addText(node.value as string);
-      }
-      state.closeNode();
-    },
-  },
-  toMarkdown: {
-    match: (node) => node.type.name === "frontmatter",
-    runner: (state, node) => {
-      state.addNode("yaml", undefined, node.textContent);
-    },
-  },
-  parseDOM: [
-    {
-      tag: "div[data-type='frontmatter']",
-      getAttrs: (dom) => {
-        if (!(dom instanceof HTMLElement)) {
-          throw new Error("Expected HTMLElement");
-        }
-        return {};
-      },
-    },
-  ],
-  toDOM: () => ["div", { "data-type": "frontmatter" }, 0],
-}));
 
 class FrontmatterNodeView implements NodeView {
   dom: HTMLElement;
@@ -66,9 +29,6 @@ class FrontmatterNodeView implements NodeView {
   update(updated: ProseNode): boolean {
     if (updated.type.name !== "frontmatter") return false;
     this.node = updated;
-    // Props in Svelte 5 are usually handled via runes or passing the same object
-    // Since we don't have an easy way to update props from here without reassignment if they are not runes,
-    // let's hope the widget handles it via reactivity if we can pass it down.
     return true;
   }
 
@@ -78,8 +38,8 @@ class FrontmatterNodeView implements NodeView {
     }
   }
 
-  stopEvent(event: Event): boolean {
-    return true; // Handle all events inside the widget
+  stopEvent(_event: Event): boolean {
+    return true;
   }
 
   ignoreMutation() {
@@ -87,17 +47,14 @@ class FrontmatterNodeView implements NodeView {
   }
 }
 
-export const frontmatter_view_plugin = $prose(
-  () =>
-    new Plugin({
-      key: new PluginKey("frontmatter-view"),
-      props: {
-        nodeViews: {
-          frontmatter: (node, view, get_pos) =>
-            new FrontmatterNodeView(node, view, get_pos),
-        },
+export function create_frontmatter_view_prose_plugin(): Plugin {
+  return new Plugin({
+    key: new PluginKey("frontmatter-view"),
+    props: {
+      nodeViews: {
+        frontmatter: (node, view, get_pos) =>
+          new FrontmatterNodeView(node, view, get_pos),
       },
-    }),
-);
-
-export const frontmatter_plugin = [frontmatter_node, frontmatter_view_plugin];
+    },
+  });
+}

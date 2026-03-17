@@ -1,79 +1,10 @@
-import { $node, $prose } from "@milkdown/kit/utils";
-import { type NodeView, type EditorView } from "@milkdown/kit/prose/view";
-import { type Node as ProseNode } from "@milkdown/kit/prose/model";
-import { Plugin, PluginKey, TextSelection } from "@milkdown/kit/prose/state";
-import { InputRule, inputRules } from "@milkdown/kit/prose/inputrules";
-import { schemaCtx } from "@milkdown/kit/core";
+import { type NodeView, type EditorView } from "prosemirror-view";
+import { type Node as ProseNode, type Schema } from "prosemirror-model";
+import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
+import { InputRule, inputRules } from "prosemirror-inputrules";
 import { mount, unmount } from "svelte";
 import katex from "katex";
 import MathBlockEditor from "../ui/math_block_editor.svelte";
-
-export const math_inline_node = $node("math_inline", () => ({
-  group: "inline",
-  inline: true,
-  atom: true,
-  marks: "",
-  content: "text*",
-  parseMarkdown: {
-    match: (node) => node.type === "inlineMath",
-    runner: (state, node, type) => {
-      state.openNode(type);
-      if (node.value) state.addText(node.value as string);
-      state.closeNode();
-    },
-  },
-  toMarkdown: {
-    match: (node) => node.type.name === "math_inline",
-    runner: (state, node) => {
-      state.addNode("inlineMath", undefined, node.textContent);
-    },
-  },
-  parseDOM: [
-    {
-      tag: "span[data-type='math_inline']",
-      getAttrs: (dom) => {
-        if (!(dom instanceof HTMLElement)) return false;
-        return {};
-      },
-    },
-  ],
-  toDOM: () => ["span", { "data-type": "math_inline" }, 0],
-}));
-
-export const math_block_node = $node("math_block", () => ({
-  group: "block",
-  atom: true,
-  marks: "",
-  defining: true,
-  isolating: true,
-  attrs: { value: { default: "" } },
-  parseMarkdown: {
-    match: (node) => node.type === "math",
-    runner: (state, node, type) => {
-      state.addNode(type, { value: (node.value as string) ?? "" });
-    },
-  },
-  toMarkdown: {
-    match: (node) => node.type.name === "math_block",
-    runner: (state, node) => {
-      state.addNode("math", undefined, node.attrs["value"] as string);
-    },
-  },
-  parseDOM: [
-    {
-      tag: "div[data-type='math_block']",
-      getAttrs: (dom) => {
-        if (!(dom instanceof HTMLElement)) return false;
-        return { value: dom.dataset["value"] ?? "" };
-      },
-    },
-  ],
-  toDOM: (node) => [
-    "div",
-    { "data-type": "math_block", "data-value": node.attrs["value"] as string },
-    0,
-  ],
-}));
 
 class MathInlineNodeView implements NodeView {
   dom: HTMLElement;
@@ -121,7 +52,7 @@ class MathInlineNodeView implements NodeView {
 
 class MathBlockNodeView implements NodeView {
   dom: HTMLElement;
-  private svelte_app: any;
+  private svelte_app: Record<string, unknown> | undefined;
 
   constructor(
     private node: ProseNode,
@@ -145,7 +76,7 @@ class MathBlockNodeView implements NodeView {
     if (updated.type.name !== "math_block") return false;
     if (updated.attrs["value"] !== this.node.attrs["value"]) {
       this.node = updated;
-      unmount(this.svelte_app);
+      if (this.svelte_app) unmount(this.svelte_app);
       this.svelte_app = mount(MathBlockEditor, {
         target: this.dom,
         props: {
@@ -175,19 +106,18 @@ class MathBlockNodeView implements NodeView {
   }
 }
 
-export const math_view_plugin = $prose(
-  () =>
-    new Plugin({
-      key: new PluginKey("math-view"),
-      props: {
-        nodeViews: {
-          math_inline: (node) => new MathInlineNodeView(node),
-          math_block: (node, view, get_pos) =>
-            new MathBlockNodeView(node, view, get_pos),
-        },
+export function create_math_view_prose_plugin(): Plugin {
+  return new Plugin({
+    key: new PluginKey("math-view"),
+    props: {
+      nodeViews: {
+        math_inline: (node) => new MathInlineNodeView(node),
+        math_block: (node, view, get_pos) =>
+          new MathBlockNodeView(node, view, get_pos),
       },
-    }),
-);
+    },
+  });
+}
 
 const INLINE_MATH_REGEX = /(?:^|[^$\\])\$([^$\n]+)\$$/;
 
@@ -206,50 +136,50 @@ export function find_inline_math_in_text(
   return { content, match_start, match_end };
 }
 
-export const math_inline_input_plugin = $prose(
-  () =>
-    new Plugin({
-      key: new PluginKey("math-inline-input"),
-      appendTransaction(transactions, _old_state, new_state) {
-        if (!transactions.some((tr) => tr.docChanged)) return null;
+export function create_math_inline_input_prose_plugin(): Plugin {
+  return new Plugin({
+    key: new PluginKey("math-inline-input"),
+    appendTransaction(transactions, _old_state, new_state) {
+      if (!transactions.some((tr) => tr.docChanged)) return null;
 
-        const { $from } = new_state.selection;
-        const parent = $from.parent;
-        if (!parent.isTextblock) return null;
-        if (parent.type.name === "code_block") return null;
+      const { $from } = new_state.selection;
+      const parent = $from.parent;
+      if (!parent.isTextblock) return null;
+      if (parent.type.name === "code_block") return null;
 
-        let combined = "";
-        parent.forEach((child) => {
-          if (child.isText && child.text) combined += child.text;
-        });
+      let combined = "";
+      parent.forEach((child) => {
+        if (child.isText && child.text) combined += child.text;
+      });
 
-        const text_before = combined.slice(0, $from.parentOffset);
-        const result = find_inline_math_in_text(text_before);
-        if (!result) return null;
+      const text_before = combined.slice(0, $from.parentOffset);
+      const result = find_inline_math_in_text(text_before);
+      if (!result) return null;
 
-        const math_type = new_state.schema.nodes["math_inline"];
-        if (!math_type) return null;
+      const math_type = new_state.schema.nodes["math_inline"];
+      if (!math_type) return null;
 
-        const block_start = $from.start();
-        const abs_start = block_start + result.match_start;
-        const abs_end = block_start + result.match_end;
+      const block_start = $from.start();
+      const abs_start = block_start + result.match_start;
+      const abs_end = block_start + result.match_end;
 
-        const math_node = math_type.create(
-          null,
-          result.content ? new_state.schema.text(result.content) : undefined,
-        );
+      const math_node = math_type.create(
+        null,
+        result.content ? new_state.schema.text(result.content) : undefined,
+      );
 
-        const tr = new_state.tr.replaceWith(abs_start, abs_end, math_node);
-        tr.setSelection(
-          TextSelection.create(tr.doc, abs_start + math_node.nodeSize),
-        );
-        return tr;
-      },
-    }),
-);
+      const tr = new_state.tr.replaceWith(abs_start, abs_end, math_node);
+      tr.setSelection(
+        TextSelection.create(tr.doc, abs_start + math_node.nodeSize),
+      );
+      return tr;
+    },
+  });
+}
 
-export const math_block_input_rule = $prose((ctx) => {
-  const schema = ctx.get(schemaCtx);
+export function create_math_block_input_rule_prose_plugin(
+  schema: Schema,
+): Plugin {
   const math_type = schema.nodes["math_block"];
 
   if (!math_type) {
@@ -271,12 +201,4 @@ export const math_block_input_rule = $prose((ctx) => {
   });
 
   return inputRules({ rules: [rule] });
-});
-
-export const math_plugin = [
-  math_inline_node,
-  math_block_node,
-  math_view_plugin,
-  math_inline_input_plugin,
-  math_block_input_rule,
-];
+}

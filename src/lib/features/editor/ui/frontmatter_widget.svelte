@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { type EditorView } from "@milkdown/kit/prose/view";
-  import { type Node as ProseNode } from "@milkdown/kit/prose/model";
+  import { type EditorView } from "prosemirror-view";
+  import { type Node as ProseNode } from "prosemirror-model";
   import Plus from "@lucide/svelte/icons/plus";
   import X from "@lucide/svelte/icons/x";
   import Tag from "@lucide/svelte/icons/tag";

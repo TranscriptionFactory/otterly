@@ -1,6 +1,5 @@
-import { $ctx, $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import type { Node } from "@milkdown/kit/prose/model";
+import { Plugin, PluginKey } from "prosemirror-state";
+import type { Node } from "prosemirror-model";
 
 export type DirtyStateChangeCallback = (is_dirty: boolean) => void;
 
@@ -9,16 +8,6 @@ export const dirty_state_plugin_key = new PluginKey("MILKDOWN_DIRTY_STATE");
 export type DirtyStatePluginConfig = {
   on_dirty_state_change: DirtyStateChangeCallback;
 };
-
-export const dirty_state_plugin_config_key = $ctx<
-  DirtyStatePluginConfig,
-  "dirty_state_plugin_config"
->(
-  {
-    on_dirty_state_change: () => {},
-  } as DirtyStatePluginConfig,
-  "dirty_state_plugin_config",
-);
 
 type PluginState = {
   saved_doc: Node | null;
@@ -33,9 +22,9 @@ function is_mark_clean_action(value: unknown): value is DirtyStateMeta {
   return obj.action === "mark_clean";
 }
 
-export const dirty_state_plugin = $prose((ctx) => {
-  const config = ctx.get(dirty_state_plugin_config_key.key);
-
+export function create_dirty_state_prose_plugin(
+  config: DirtyStatePluginConfig,
+): Plugin<PluginState> {
   return new Plugin<PluginState>({
     key: dirty_state_plugin_key,
     state: {
@@ -80,4 +69,4 @@ export const dirty_state_plugin = $prose((ctx) => {
       },
     },
   });
-});
+}

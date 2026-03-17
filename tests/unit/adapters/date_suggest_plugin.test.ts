@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import { EditorState, TextSelection } from "@milkdown/kit/prose/state";
+import { Schema } from "prosemirror-model";
+import { EditorState, TextSelection } from "prosemirror-state";
 import {
   generate_date_presets,
   extract_date_trigger,

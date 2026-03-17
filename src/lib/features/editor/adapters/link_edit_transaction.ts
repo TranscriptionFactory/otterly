@@ -1,5 +1,5 @@
-import type { EditorState } from "@milkdown/kit/prose/state";
-import type { MarkType } from "@milkdown/kit/prose/model";
+import type { EditorState } from "prosemirror-state";
+import type { MarkType } from "prosemirror-model";
 
 export interface LinkEditParams {
   from: number;

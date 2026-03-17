@@ -1,11 +1,5 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey, TextSelection } from "@milkdown/kit/prose/state";
-import { linkSchema } from "@milkdown/kit/preset/commonmark";
-import type {
-  MarkType,
-  Node as ProseNode,
-  Mark,
-} from "@milkdown/kit/prose/model";
+import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
+import type { MarkType, Node as ProseNode, Mark } from "prosemirror-model";
 
 const MARKDOWN_LINK_REGEX = /\[([^\]]+)\]\(([^)\n]+?\.md|[^)\s]+)\)/i;
 const ZERO_WIDTH_SPACE = "\u200B";
@@ -139,8 +133,3 @@ export function create_markdown_link_input_rule_prose_plugin(input: {
     },
   });
 }
-
-export const markdown_link_input_rule_plugin = $prose((ctx) => {
-  const link_type = linkSchema.type(ctx);
-  return create_markdown_link_input_rule_prose_plugin({ link_type });
-});

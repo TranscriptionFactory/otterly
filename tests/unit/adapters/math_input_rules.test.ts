@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import { EditorState, TextSelection } from "@milkdown/kit/prose/state";
+import { Schema } from "prosemirror-model";
+import { EditorState } from "prosemirror-state";
 import { find_inline_math_in_text } from "$lib/features/editor/adapters/math_plugin";
 
 describe("find_inline_math_in_text", () => {
@@ -89,14 +89,15 @@ describe("inline math conversion via appendTransaction", () => {
       paragraph.create(null, [schema.text("hello $x^2$")]),
     ]);
 
-    const state = EditorState.create({ doc: doc_with_text });
+    EditorState.create({ doc: doc_with_text });
     const text = "hello $x^2$";
     const result = find_inline_math_in_text(text);
 
     expect(result).not.toBeNull();
-    expect(result!.content).toBe("x^2");
+    if (!result) return;
+    expect(result.content).toBe("x^2");
 
-    const math_node = math_inline.create(null, schema.text(result!.content));
+    const math_node = math_inline.create(null, schema.text(result.content));
     expect(math_node.type.name).toBe("math_inline");
     expect(math_node.textContent).toBe("x^2");
   });

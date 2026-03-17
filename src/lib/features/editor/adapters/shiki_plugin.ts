@@ -1,7 +1,6 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import { Decoration, DecorationSet } from "@milkdown/kit/prose/view";
-import type { Node as ProseNode } from "@milkdown/kit/prose/model";
+import { Plugin, PluginKey } from "prosemirror-state";
+import { Decoration, DecorationSet } from "prosemirror-view";
+import type { Node as ProseNode } from "prosemirror-model";
 import type { HighlighterCore } from "shiki/core";
 import {
   get_highlighter_sync,
@@ -74,7 +73,7 @@ function build_decorations(
   return DecorationSet.create(doc, decorations);
 }
 
-export const shiki_plugin = $prose(() => {
+export function create_shiki_prose_plugin(): Plugin {
   let theme_observer: MutationObserver | null = null;
 
   return new Plugin({
@@ -154,4 +153,4 @@ export const shiki_plugin = $prose(() => {
       };
     },
   });
-});
+}

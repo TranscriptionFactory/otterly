@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import { EditorState, TextSelection } from "@milkdown/kit/prose/state";
+import { Schema } from "prosemirror-model";
+import { EditorState, TextSelection } from "prosemirror-state";
 import {
   extract_slash_query_from_state,
   filter_commands,
@@ -328,7 +328,7 @@ function make_mock_view(state: EditorState) {
     state,
     dispatch: (tr: unknown) => dispatched.push(tr),
     focus: vi.fn(),
-  } as unknown as import("@milkdown/kit/prose/view").EditorView;
+  } as unknown as import("prosemirror-view").EditorView;
   return { view, dispatched };
 }
 
@@ -354,7 +354,7 @@ describe("slash command insert", () => {
     find_cmd("blockquote").insert(view, 1);
     expect(dispatched).toHaveLength(1);
 
-    const tr = dispatched[0] as import("@milkdown/kit/prose/state").Transaction;
+    const tr = dispatched[0] as import("prosemirror-state").Transaction;
     const first = tr.doc.firstChild;
     expect(first?.type.name).toBe("blockquote");
     expect(first?.firstChild?.type.name).toBe("paragraph");
@@ -367,7 +367,7 @@ describe("slash command insert", () => {
     find_cmd("bullet").insert(view, 1);
     expect(dispatched).toHaveLength(1);
 
-    const tr = dispatched[0] as import("@milkdown/kit/prose/state").Transaction;
+    const tr = dispatched[0] as import("prosemirror-state").Transaction;
     const first = tr.doc.firstChild;
     expect(first?.type.name).toBe("bullet_list");
     expect(first?.firstChild?.type.name).toBe("list_item");
@@ -380,7 +380,7 @@ describe("slash command insert", () => {
     find_cmd("ordered").insert(view, 1);
     expect(dispatched).toHaveLength(1);
 
-    const tr = dispatched[0] as import("@milkdown/kit/prose/state").Transaction;
+    const tr = dispatched[0] as import("prosemirror-state").Transaction;
     const first = tr.doc.firstChild;
     expect(first?.type.name).toBe("ordered_list");
     expect(first?.firstChild?.type.name).toBe("list_item");
@@ -393,7 +393,7 @@ describe("slash command insert", () => {
     find_cmd("table").insert(view, 1);
     expect(dispatched).toHaveLength(1);
 
-    const tr = dispatched[0] as import("@milkdown/kit/prose/state").Transaction;
+    const tr = dispatched[0] as import("prosemirror-state").Transaction;
     const table = tr.doc.firstChild;
     expect(table?.type.name).toBe("table");
     expect(table?.childCount).toBe(2);
@@ -407,7 +407,7 @@ describe("slash command insert", () => {
 
     find_cmd("table").insert(view, 1);
 
-    const tr = dispatched[0] as import("@milkdown/kit/prose/state").Transaction;
+    const tr = dispatched[0] as import("prosemirror-state").Transaction;
     expect(tr.doc.childCount).toBe(2);
     expect(tr.doc.child(1).type.name).toBe("paragraph");
   });
@@ -419,7 +419,7 @@ describe("slash command insert", () => {
     find_cmd("divider").insert(view, 1);
     expect(dispatched).toHaveLength(1);
 
-    const tr = dispatched[0] as import("@milkdown/kit/prose/state").Transaction;
+    const tr = dispatched[0] as import("prosemirror-state").Transaction;
     expect(tr.doc.firstChild?.type.name).toBe("hr");
     expect(tr.doc.childCount).toBe(2);
     expect(tr.doc.child(1).type.name).toBe("paragraph");
