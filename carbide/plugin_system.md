@@ -258,10 +258,6 @@ The plugin manager should show this classification before the user enables the p
 
 Even scoped to the top 20 plugins: ~2-3 months (Vault shim, MetadataCache, Editor adapter, event system, testing against real plugins). Not justified until Carbide has real adoption.
 
-## Ironclaw Assessment
-
-Evaluated [nearai/ironclaw](https://github.com/nearai/ironclaw) for plugin design inspiration. Ironclaw is a headless AI agent runtime with WASM-sandboxed tools — fundamentally different problem (request/response tool execution vs long-lived UI plugins in a desktop editor). The "transferable" patterns (capability permissions, manifest schemas, credential isolation) are standard plugin security patterns that don't require ironclaw as a reference. Obsidian and VS Code are far closer analogues. **Verdict: not useful for Carbide's plugin design.**
-
 ## Implementation Plan
 
 ### Phase 1a: Native Plugin API foundation — DONE
