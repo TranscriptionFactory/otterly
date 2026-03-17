@@ -56,11 +56,12 @@
 
 ## P2: Editor Enhancements (Aligns with PRIORITIES.md Tier 2–3)
 
-### 8. Code block syntax highlighting with Shiki — NOT STARTED
+### 8. Code block syntax highlighting with Shiki — IMPLEMENTED
 
 **Symptom:** User wants richer code block highlighting (Shiki-quality) in the Milkdown editor.
 **Status:** Phase 7 ships CodeMirror-based read-only syntax highlighting for non-markdown files. In-editor code blocks use Milkdown's default (basic). Not tracked as a TODO item.
 **Action:** Evaluate `@milkdown/plugin-shiki` or a custom ProseMirror NodeView wrapping Shiki. Medium effort — nice upgrade but not blocking workflows. Defer behind P1 items. View `/Users/abir/src/KBM_Notes/scratch` for a potentially portable implementation
+**Resolution:** Replaced `@milkdown/plugin-prism` with a custom Shiki-based ProseMirror decoration plugin. Uses `createHighlighterCoreSync` with JS regex engine (no WASM) for instant startup. Bundles 33 language grammars statically. Auto-follows app light/dark theme via `data-color-scheme` MutationObserver (github-light / github-dark themes). Unsupported languages gracefully fall back to plain text. See `carbide/sprints/2026-03-16_shiki_syntax_highlighting.md` for details.
 
 \
 
@@ -160,4 +161,4 @@
 11\. Tags UI (#13), Calendar (#14), Anchor links (#18)
 12\. Full-vault graph (#17) — per PRIORITIES.md sequencing
 13\. Theme expansion (#15), Plugin maturation (#16)
-14\. Code highlighting upgrade (#8), Draggable sections (#19)
+14\. ~~Code highlighting upgrade (#8)~~ DONE, Draggable sections (#19)

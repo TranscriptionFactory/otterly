@@ -40,7 +40,8 @@ import {
 import { listener, listenerCtx } from "@milkdown/kit/plugin/listener";
 import { history } from "@milkdown/kit/plugin/history";
 import { clipboard } from "@milkdown/kit/plugin/clipboard";
-import { prism } from "@milkdown/plugin-prism";
+import { shiki_plugin } from "./shiki_plugin";
+import { init_highlighter } from "./shiki_highlighter";
 import { indent } from "@milkdown/plugin-indent";
 import { replaceAll } from "@milkdown/kit/utils";
 import { ImageOff, LoaderCircle } from "lucide-static";
@@ -101,6 +102,8 @@ import { count_words } from "$lib/shared/utils/count_words";
 import { create_logger } from "$lib/shared/utils/logger";
 
 const log = create_logger("milkdown_adapter");
+
+init_highlighter();
 
 const non_inclusive_inline_code = inlineCodeSchema.extendSchema(
   (prev) => (ctx) => ({ ...prev(ctx), inclusive: false }),
@@ -497,7 +500,7 @@ export function create_milkdown_editor_port(args?: {
         .use(non_inclusive_strikethrough)
         .use(paired_delimiter_plugin)
         .use(mark_escape_plugin)
-        .use(prism)
+        .use(shiki_plugin)
         .use(code_block_view_plugin)
         .use(table_toolbar_plugin)
         .use(image_toolbar_plugin)
