@@ -1470,6 +1470,41 @@
 
           <div class="SettingsDialog__section-content">
             <div class="SettingsDialog__row">
+              <div class="SettingsDialog__label-group">
+                <span class="SettingsDialog__label">Default Note Name</span>
+                <span class="SettingsDialog__description">
+                  Template using strftime tokens: %Y (year), %m (month), %d
+                  (day), %H (hour), %M (minute), %S (second). Leave empty for
+                  Untitled-N.
+                </span>
+              </div>
+              <div class="flex items-center gap-3">
+                <Input
+                  type="text"
+                  value={editor_settings.default_note_name_template}
+                  oninput={(e: Event & { currentTarget: HTMLInputElement }) => {
+                    update("default_note_name_template", e.currentTarget.value);
+                  }}
+                  class="w-48"
+                  placeholder="e.g. %Y-%m-%d"
+                />
+                <button
+                  type="button"
+                  class="SettingsDialog__reset"
+                  onclick={() =>
+                    update(
+                      "default_note_name_template",
+                      DEFAULT_EDITOR_SETTINGS.default_note_name_template,
+                    )}
+                  disabled={editor_settings.default_note_name_template ===
+                    DEFAULT_EDITOR_SETTINGS.default_note_name_template}
+                  title="Reset to default (empty = Untitled-N)"
+                >
+                  <RotateCcw />
+                </button>
+              </div>
+            </div>
+            <div class="SettingsDialog__row">
               <span class="SettingsDialog__label">Attachment Folder</span>
               <Input
                 type="text"
