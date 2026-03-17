@@ -1,11 +1,11 @@
 {
-	"folders": [
-		{
-			"path": "../badgerly"
-		},
-		{
-			"path": "."
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "path": "../badgerly",
+    },
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {},
 }

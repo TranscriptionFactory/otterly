@@ -151,13 +151,12 @@ describe("CodeBlockView", () => {
 
       expect(view.state.doc.childCount).toBe(1);
 
-      const wrapper = get_code_block_wrapper(container!);
       const event = new KeyboardEvent("keydown", {
         key: "Enter",
         metaKey: true,
         bubbles: true,
       });
-      wrapper?.dispatchEvent(event);
+      view.dom.dispatchEvent(event);
 
       expect(view.state.doc.childCount).toBe(2);
       expect(view.state.doc.lastChild?.type.name).toBe("paragraph");
@@ -185,12 +184,11 @@ describe("CodeBlockView", () => {
 
       expect(view.state.doc.childCount).toBe(1);
 
-      const wrapper = get_code_block_wrapper(container!);
       const event = new KeyboardEvent("keydown", {
         key: "ArrowDown",
         bubbles: true,
       });
-      wrapper?.dispatchEvent(event);
+      view.dom.dispatchEvent(event);
 
       expect(view.state.doc.childCount).toBe(2);
       expect(view.state.doc.lastChild?.type.name).toBe("paragraph");
@@ -198,7 +196,7 @@ describe("CodeBlockView", () => {
       view.destroy();
     });
 
-    it("does not create paragraph on ArrowDown when not at document end", () => {
+    it("creates paragraph after code block on ArrowDown at end even when content follows", () => {
       const code = "const x = 1;";
       const para = schema.nodes.paragraph.create(null, schema.text("after"));
       const code_block = schema.nodes.code_block.create(
@@ -222,7 +220,7 @@ describe("CodeBlockView", () => {
         },
       });
 
-      const code_block_end = 1 + code.length + 1;
+      const code_block_end = 1 + code.length;
       const tr = view.state.tr.setSelection(
         TextSelection.create(view.state.doc, code_block_end, code_block_end),
       );
@@ -230,14 +228,14 @@ describe("CodeBlockView", () => {
 
       expect(view.state.doc.childCount).toBe(2);
 
-      const wrapper = get_code_block_wrapper(container!);
       const event = new KeyboardEvent("keydown", {
         key: "ArrowDown",
         bubbles: true,
       });
-      wrapper?.dispatchEvent(event);
+      view.dom.dispatchEvent(event);
 
-      expect(view.state.doc.childCount).toBe(2);
+      expect(view.state.doc.childCount).toBe(3);
+      expect(view.state.doc.child(1)?.type.name).toBe("paragraph");
 
       view.destroy();
     });
@@ -272,15 +270,62 @@ describe("CodeBlockView", () => {
 
       expect(view.state.doc.childCount).toBe(1);
 
-      const wrapper = get_code_block_wrapper(container!);
       const event = new KeyboardEvent("keydown", {
         key: "ArrowUp",
         bubbles: true,
       });
-      wrapper?.dispatchEvent(event);
+      view.dom.dispatchEvent(event);
 
       expect(view.state.doc.childCount).toBe(2);
       expect(view.state.doc.firstChild?.type.name).toBe("paragraph");
+
+      view.destroy();
+    });
+
+    it("creates paragraph before code block on ArrowUp at start even when content precedes", () => {
+      const code = "const x = 1;";
+      const para = schema.nodes.paragraph.create(null, schema.text("before"));
+      const code_block = schema.nodes.code_block.create(
+        { language: "javascript" },
+        schema.text(code),
+      );
+      const doc = schema.nodes.doc.create(null, [para, code_block]);
+
+      const container_el = document.createElement("div");
+      document.body.appendChild(container_el);
+      container = container_el;
+
+      const plugin = create_code_block_view_prose_plugin();
+      const state = EditorState.create({ doc, plugins: [plugin] });
+
+      const view = new EditorView(container_el, {
+        state,
+        dispatchTransaction: (tr) => {
+          const new_state = view.state.apply(tr);
+          view.updateState(new_state);
+        },
+      });
+
+      const code_block_start = 1 + "before".length + 1 + 1;
+      const tr = view.state.tr.setSelection(
+        TextSelection.create(
+          view.state.doc,
+          code_block_start,
+          code_block_start,
+        ),
+      );
+      view.dispatch(tr);
+
+      expect(view.state.doc.childCount).toBe(2);
+
+      const event = new KeyboardEvent("keydown", {
+        key: "ArrowUp",
+        bubbles: true,
+      });
+      view.dom.dispatchEvent(event);
+
+      expect(view.state.doc.childCount).toBe(3);
+      expect(view.state.doc.child(1)?.type.name).toBe("paragraph");
 
       view.destroy();
     });

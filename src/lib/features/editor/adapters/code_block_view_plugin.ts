@@ -253,16 +253,6 @@ class CodeBlockView implements NodeView {
     if (this.current_language === "mermaid") {
       this.setup_mermaid(pre);
     }
-
-    this.dom.addEventListener(
-      "keydown",
-      (e) => {
-        if (this.handle_keydown(e)) {
-          e.stopPropagation();
-        }
-      },
-      true,
-    );
   }
 
   private setup_mermaid(pre: HTMLElement) {
@@ -327,59 +317,6 @@ class CodeBlockView implements NodeView {
     this.mermaid = null;
     const pre = this.dom.querySelector("pre");
     if (pre) pre.style.display = "";
-  }
-
-  private handle_keydown(event: KeyboardEvent): boolean {
-    const pos = this.get_pos();
-    if (pos === undefined) return false;
-
-    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-      event.preventDefault();
-      this.exit_code_block(pos, "after");
-      return true;
-    }
-
-    if (event.key === "ArrowDown") {
-      const { to } = this.view.state.selection;
-      const code_block_end = pos + this.node.nodeSize - 1;
-      if (to === code_block_end) {
-        const doc_size = this.view.state.doc.content.size;
-        if (code_block_end >= doc_size - 1) {
-          event.preventDefault();
-          this.exit_code_block(pos, "after");
-          return true;
-        }
-      }
-    }
-
-    if (event.key === "ArrowUp") {
-      const { from } = this.view.state.selection;
-      const code_block_start = pos + 1;
-      if (from === code_block_start && pos === 0) {
-        event.preventDefault();
-        this.exit_code_block(pos, "before");
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private exit_code_block(pos: number, direction: "before" | "after") {
-    const tr = this.view.state.tr;
-    const para = schema.nodes.paragraph.create();
-
-    if (direction === "after") {
-      const insert_pos = pos + this.node.nodeSize;
-      tr.insert(insert_pos, para);
-      tr.setSelection(TextSelection.create(tr.doc, insert_pos + 1));
-    } else {
-      tr.insert(pos, para);
-      tr.setSelection(TextSelection.create(tr.doc, pos + 1));
-    }
-
-    this.view.dispatch(tr);
-    this.view.focus();
   }
 
   private toggle_picker() {
@@ -481,6 +418,57 @@ export function create_code_block_view_prose_plugin(): Plugin {
       nodeViews: {
         code_block: (node, view, get_pos) =>
           new CodeBlockView(node, view, get_pos),
+      },
+      handleDOMEvents: {
+        keydown(view, event) {
+          const { selection } = view.state;
+          const $from = selection.$from;
+
+          if ($from.parent.type.name !== "code_block") return false;
+
+          const pos = $from.before($from.depth);
+          const node = view.state.doc.nodeAt(pos);
+          if (!node || node.type.name !== "code_block") return false;
+
+          const code_block_end = pos + node.nodeSize - 1;
+          const code_block_start = pos + 1;
+
+          if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+            event.preventDefault();
+            const tr = view.state.tr;
+            const para = schema.nodes.paragraph.create();
+            tr.insert(pos + node.nodeSize, para);
+            tr.setSelection(
+              TextSelection.create(tr.doc, pos + node.nodeSize + 1),
+            );
+            view.dispatch(tr);
+            return true;
+          }
+
+          if (event.key === "ArrowDown" && selection.to === code_block_end) {
+            event.preventDefault();
+            const tr = view.state.tr;
+            const para = schema.nodes.paragraph.create();
+            tr.insert(pos + node.nodeSize, para);
+            tr.setSelection(
+              TextSelection.create(tr.doc, pos + node.nodeSize + 1),
+            );
+            view.dispatch(tr);
+            return true;
+          }
+
+          if (event.key === "ArrowUp" && selection.from === code_block_start) {
+            event.preventDefault();
+            const tr = view.state.tr;
+            const para = schema.nodes.paragraph.create();
+            tr.insert(pos, para);
+            tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+            view.dispatch(tr);
+            return true;
+          }
+
+          return false;
+        },
       },
     },
   });
