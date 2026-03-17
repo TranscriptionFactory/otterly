@@ -141,15 +141,15 @@ Extract `markdown_options()` from `link_parser.rs` to `markdown_doc.rs`. Both `p
 
 ## Files changed
 
-| File                                           | Change                                                                                    |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `src-tauri/src/features/search/markdown_doc.rs` | **New** — `ParsedNote`, `parse_note()`                                                   |
-| `src-tauri/src/features/search/mod.rs`          | Add `pub mod markdown_doc;`                                                              |
-| `src-tauri/src/features/search/db.rs`          | Refactor `upsert_note`, `extract_meta`, `rebuild_index`, `sync_index` to use `ParsedNote` |
-| `src-tauri/src/features/search/link_parser.rs` | Move `markdown_options()` to shared; extraction functions become wrappers                 |
-| `src-tauri/src/features/search/frontmatter.rs` | No changes (reused as-is)                                                                 |
-| `src-tauri/src/features/tasks/service.rs`      | No changes (called from `parse_note`)                                                     |
-| `src-tauri/src/features/notes/service.rs`      | `extract_title()` kept but no longer called during indexing                               |
+| File                                            | Change                                                                                    |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `src-tauri/src/features/search/markdown_doc.rs` | **New** — `ParsedNote`, `parse_note()`                                                    |
+| `src-tauri/src/features/search/mod.rs`          | Add `pub mod markdown_doc;`                                                               |
+| `src-tauri/src/features/search/db.rs`           | Refactor `upsert_note`, `extract_meta`, `rebuild_index`, `sync_index` to use `ParsedNote` |
+| `src-tauri/src/features/search/link_parser.rs`  | Move `markdown_options()` to shared; extraction functions become wrappers                 |
+| `src-tauri/src/features/search/frontmatter.rs`  | No changes (reused as-is)                                                                 |
+| `src-tauri/src/features/tasks/service.rs`       | No changes (called from `parse_note`)                                                     |
+| `src-tauri/src/features/notes/service.rs`       | `extract_title()` kept but no longer called during indexing                               |
 
 ## Performance impact
 
