@@ -6,6 +6,7 @@ import {
   editorViewCtx,
   parserCtx,
   remarkPluginsCtx,
+  remarkStringifyOptionsCtx,
 } from "@milkdown/kit/core";
 import {
   EditorState,
@@ -387,10 +388,14 @@ export function create_milkdown_editor_port(args?: {
         .use(imageBlockComponent)
         .use(image_block_schema_with_width)
         .config((ctx) => {
+          ctx.update(remarkStringifyOptionsCtx, (prev) => ({
+            ...prev,
+            rule: "-" as const,
+          }));
           ctx.update(remarkPluginsCtx, (prev) => [
             ...prev,
-            remarkFrontmatter as any,
-            remarkMath as any,
+            { plugin: remarkFrontmatter, options: {} } as any,
+            { plugin: remarkMath, options: {} } as any,
           ]);
           if (resolve_asset_url_for_vault) {
             const resolve = resolve_asset_url_for_vault;
