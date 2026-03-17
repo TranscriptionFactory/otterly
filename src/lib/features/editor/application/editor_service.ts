@@ -274,6 +274,23 @@ export class EditorService {
     this.session?.scroll_to_position?.(pos);
   }
 
+  insert_frontmatter(): boolean {
+    if (!this.session || !this.active_note) return false;
+
+    const markdown = this.session.get_markdown();
+    if (markdown.trimStart().startsWith("---")) return false;
+
+    const frontmatter_block = "---\ntags:\n  - \n---\n\n";
+    const new_markdown = frontmatter_block + markdown;
+    this.session.set_markdown(new_markdown);
+    this.editor_store.set_markdown(
+      this.active_note.meta.id,
+      as_markdown_text(new_markdown),
+    );
+    this.editor_store.set_dirty(this.active_note.meta.id, true);
+    return true;
+  }
+
   private resolve_visual_selection(): EditorSelectionSnapshot | null {
     const text = this.session?.get_selected_text?.();
     if (!text || text.trim() === "") return null;
