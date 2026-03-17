@@ -32,11 +32,12 @@
 
 ## P1: Performance & Core UX Gaps
 
-### 4. Vault initial indexing too slow (\~30s spinner) — NOT STARTED
+### 4. Vault initial indexing too slow (\~30s spinner) — IMPLEMENTED
 
 **Symptom:** First-time vault open shows Apple spinning wheel for \~30 seconds.
 **Status:** Not tracked. Related to Phase 3M (Metadata Cache) indexing pipeline.
 **Action:** Profile the indexing path (FTS + frontmatter + metadata). Likely candidates: synchronous SQLite inserts without batching, or blocking the main thread during file walk. Consider: batch inserts in a transaction, progressive/async indexing with a progress bar, or indexing in a background thread that doesn't block the UI.
+**Resolution:** Root cause was `load_note_count()` blocking all vault open IPC commands with a synchronous WalkDir scan. Removed sync note count from open path; vault now opens instantly using cached count and refreshes asynchronously. Added SQLite PRAGMAs (8MB cache, 256MB mmap) and moved outlink resolution inside transactions. See `carbide/sprints/2026-03-16_vault_indexing_perf.md` for details.
 
 ### 6. Global search omnibar keyboard shortcut not working/discoverable — NOT STARTED
 
@@ -142,7 +143,7 @@
 3. `.badgerly` folder leak (#3) — trust violation
 
 **Next sprint (P1 — core UX):**
-4\. Vault indexing performance (#4) — first impression killer
+4\. ~~Vault indexing performance (#4) — first impression killer~~ DONE
 5\. Find & Replace (#5) — table-stakes editor feature
 6\. Verify omnibar/outline shortcuts (#6, #7) — possibly just discoverability fixes
 
