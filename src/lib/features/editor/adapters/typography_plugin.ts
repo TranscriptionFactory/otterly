@@ -1,5 +1,4 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
+import { Plugin, PluginKey } from "prosemirror-state";
 
 interface TypographyRule {
   trigger: string;
@@ -37,50 +36,49 @@ export function find_typography_match(
 
 export const typography_plugin_key = new PluginKey("typography");
 
-export const typography_plugin = $prose(
-  () =>
-    new Plugin({
-      key: typography_plugin_key,
-      props: {
-        handleTextInput(view, from, to, text) {
-          if (text.length !== 1) return false;
+export function create_typography_prose_plugin(): Plugin {
+  return new Plugin({
+    key: typography_plugin_key,
+    props: {
+      handleTextInput(view, from, to, text) {
+        if (text.length !== 1) return false;
 
-          const { state } = view;
-          const $from = state.doc.resolve(from);
-          const parent = $from.parent;
+        const { state } = view;
+        const $from = state.doc.resolve(from);
+        const parent = $from.parent;
 
-          if (parent.type.name === "code_block") return false;
-          if (parent.type.name === "math_block") return false;
-          if (
-            $from
-              .marks()
-              .some(
-                (m) => m.type.name === "code_inline" || m.type.name === "code",
-              )
-          )
-            return false;
+        if (parent.type.name === "code_block") return false;
+        if (parent.type.name === "math_block") return false;
+        if (
+          $from
+            .marks()
+            .some(
+              (m) => m.type.name === "code_inline" || m.type.name === "code",
+            )
+        )
+          return false;
 
-          const text_before = parent.textBetween(
-            0,
-            $from.parentOffset,
-            undefined,
-            "\ufffc",
-          );
+        const text_before = parent.textBetween(
+          0,
+          $from.parentOffset,
+          undefined,
+          "\ufffc",
+        );
 
-          const match = find_typography_match(text_before, text);
-          if (!match) return false;
+        const match = find_typography_match(text_before, text);
+        if (!match) return false;
 
-          const parent_start = $from.start();
-          const replace_from = parent_start + match.from_offset;
-          const replace_to = to;
-          const tr = state.tr.replaceWith(
-            replace_from,
-            replace_to,
-            state.schema.text(match.replacement),
-          );
-          view.dispatch(tr);
-          return true;
-        },
+        const parent_start = $from.start();
+        const replace_from = parent_start + match.from_offset;
+        const replace_to = to;
+        const tr = state.tr.replaceWith(
+          replace_from,
+          replace_to,
+          state.schema.text(match.replacement),
+        );
+        view.dispatch(tr);
+        return true;
       },
-    }),
-);
+    },
+  });
+}

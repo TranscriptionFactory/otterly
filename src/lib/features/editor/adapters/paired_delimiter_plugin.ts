@@ -1,6 +1,5 @@
-import { Plugin, PluginKey, TextSelection } from "@milkdown/kit/prose/state";
-import { $prose } from "@milkdown/kit/utils";
-import type { EditorView } from "@milkdown/kit/prose/view";
+import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
 
 const paired_delimiter_plugin_key = new PluginKey("paired-delimiter");
 
@@ -93,7 +92,7 @@ function insert_wiki_delimiters(
   return true;
 }
 
-export function create_paired_delimiter_prose_plugin() {
+export function create_paired_delimiter_prose_plugin(): Plugin {
   return new Plugin({
     key: paired_delimiter_plugin_key,
     props: {
@@ -124,7 +123,3 @@ export function create_paired_delimiter_prose_plugin() {
     },
   });
 }
-
-export const paired_delimiter_plugin = $prose(() =>
-  create_paired_delimiter_prose_plugin(),
-);

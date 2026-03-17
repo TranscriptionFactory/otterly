@@ -9,8 +9,9 @@ describe("slash command: frontmatter", () => {
     const commands = create_commands();
     const fm = commands.find((c) => c.id === "frontmatter");
     expect(fm).toBeDefined();
-    expect(fm!.label).toBe("Properties");
-    expect(fm!.is_available).toBeTypeOf("function");
+    if (!fm) return;
+    expect(fm.label).toBe("Properties");
+    expect(fm.is_available).toBeTypeOf("function");
   });
 
   it("is filterable by keyword 'frontmatter'", () => {

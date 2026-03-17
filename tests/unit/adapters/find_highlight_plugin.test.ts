@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import { EditorState } from "@milkdown/kit/prose/state";
-import type { Node as ProseNode } from "@milkdown/kit/prose/model";
+import { Schema } from "prosemirror-model";
+import { EditorState } from "prosemirror-state";
+import type { Node as ProseNode } from "prosemirror-model";
 import {
   create_find_highlight_prose_plugin,
   find_highlight_plugin_key,

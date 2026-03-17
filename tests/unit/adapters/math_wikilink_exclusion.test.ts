@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import { EditorState, PluginKey } from "@milkdown/kit/prose/state";
+import { Schema } from "prosemirror-model";
+import { EditorState, PluginKey } from "prosemirror-state";
 import { create_wiki_link_converter_prose_plugin } from "$lib/features/editor/adapters/wiki_link_plugin";
-import type { Mark, MarkType } from "@milkdown/kit/prose/model";
+import type { Mark, MarkType } from "prosemirror-model";
 
 function create_schema() {
   const link = {
@@ -58,7 +58,7 @@ function create_schema() {
 }
 
 function has_link_mark(
-  doc: import("@milkdown/kit/prose/model").Node,
+  doc: import("prosemirror-model").Node,
   link_type: MarkType,
 ): boolean {
   let found = false;

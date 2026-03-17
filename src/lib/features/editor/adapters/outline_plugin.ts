@@ -1,6 +1,5 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import type { Node as ProseNode } from "@milkdown/kit/prose/model";
+import { Plugin, PluginKey } from "prosemirror-state";
+import type { Node as ProseNode } from "prosemirror-model";
 import type { OutlineHeading } from "$lib/features/outline";
 
 type OutlinePluginState = {
@@ -39,7 +38,7 @@ function headings_equal(a: OutlineHeading[], b: OutlineHeading[]): boolean {
   return true;
 }
 
-function create_outline_prose_plugin(): Plugin<OutlinePluginState> {
+export function create_outline_prose_plugin(): Plugin<OutlinePluginState> {
   return new Plugin<OutlinePluginState>({
     key: outline_plugin_key,
     state: {
@@ -58,5 +57,3 @@ function create_outline_prose_plugin(): Plugin<OutlinePluginState> {
     },
   });
 }
-
-export const outline_plugin = $prose(() => create_outline_prose_plugin());

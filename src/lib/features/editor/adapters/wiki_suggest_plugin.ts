@@ -1,7 +1,6 @@
-import { $ctx, $prose } from "@milkdown/kit/utils";
-import { TooltipProvider } from "@milkdown/kit/plugin/tooltip";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import type { EditorView } from "@milkdown/kit/prose/view";
+import { Plugin, PluginKey } from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
+import { computePosition, flip, shift, offset } from "@floating-ui/dom";
 import { format_wiki_display } from "$lib/features/editor/domain/wiki_link";
 import { parent_folder_path } from "$lib/shared/utils/path";
 
@@ -29,18 +28,6 @@ export type WikiSuggestPluginConfig = {
   on_dismiss: () => void;
   base_note_path: string;
 };
-
-export const wiki_suggest_plugin_config_key = $ctx<
-  WikiSuggestPluginConfig,
-  "wiki_suggest_plugin_config"
->(
-  {
-    on_query: () => {},
-    on_dismiss: () => {},
-    base_note_path: "",
-  } as WikiSuggestPluginConfig,
-  "wiki_suggest_plugin_config",
-);
 
 const EMPTY_STATE: WikiSuggestState = {
   active: false,
@@ -142,11 +129,21 @@ function scroll_selected_item_into_view(
   }
 }
 
+function position_dropdown(dropdown: HTMLElement, anchor_el: Element) {
+  void computePosition(anchor_el, dropdown, {
+    placement: "bottom-start",
+    middleware: [offset(6), flip(), shift({ padding: 8 })],
+  }).then(({ x, y }) => {
+    dropdown.style.left = `${String(x)}px`;
+    dropdown.style.top = `${String(y)}px`;
+  });
+}
+
 export function create_wiki_suggest_prose_plugin(
   config: WikiSuggestPluginConfig,
 ): Plugin<WikiSuggestState> {
   let dropdown: HTMLElement | null = null;
-  let provider: TooltipProvider | null = null;
+  let is_visible = false;
   let debounce_timer: ReturnType<typeof setTimeout> | null = null;
   let suppress_next_activation = false;
   let dismissed_query: string | null = null;
@@ -156,6 +153,25 @@ export function create_wiki_suggest_prose_plugin(
 
   function get_state(view: EditorView): WikiSuggestState {
     return wiki_suggest_plugin_key.getState(view.state) ?? EMPTY_STATE;
+  }
+
+  function show_dropdown(view: EditorView) {
+    if (!dropdown) return;
+    const { $from } = view.state.selection;
+    const coords = view.coordsAtPos($from.pos);
+    const anchor_el = {
+      getBoundingClientRect: () =>
+        new DOMRect(coords.left, coords.top, 0, coords.bottom - coords.top),
+    } as Element;
+    dropdown.style.display = "block";
+    is_visible = true;
+    position_dropdown(dropdown, anchor_el);
+  }
+
+  function hide_dropdown() {
+    if (!dropdown) return;
+    dropdown.style.display = "none";
+    is_visible = false;
   }
 
   function dismiss(view: EditorView, lock_query: boolean) {
@@ -175,7 +191,7 @@ export function create_wiki_suggest_prose_plugin(
 
     view.dispatch(view.state.tr.setMeta(wiki_suggest_plugin_key, EMPTY_STATE));
     config.on_dismiss();
-    provider?.hide();
+    hide_dropdown();
   }
 
   function accept(view: EditorView, index: number) {
@@ -199,14 +215,14 @@ export function create_wiki_suggest_prose_plugin(
     dismissed_query = null;
     dismissed_from = null;
     config.on_dismiss();
-    provider?.hide();
+    hide_dropdown();
   }
 
   function sync_dropdown(view: EditorView, state: WikiSuggestState) {
-    if (!dropdown || !provider) return;
+    if (!dropdown) return;
 
     if (!state.active || state.items.length === 0) {
-      provider.hide();
+      hide_dropdown();
       return;
     }
 
@@ -215,7 +231,10 @@ export function create_wiki_suggest_prose_plugin(
     });
 
     scroll_selected_item_into_view(dropdown, state.selected_index);
-    provider.update(view, undefined);
+
+    if (!is_visible || state.active) {
+      show_dropdown(view);
+    }
   }
 
   return new Plugin<WikiSuggestState>({
@@ -241,22 +260,10 @@ export function create_wiki_suggest_prose_plugin(
 
     view(editor_view) {
       dropdown = create_dropdown();
-
-      provider = new TooltipProvider({
-        content: dropdown,
-        debounce: 16,
-        offset: 6,
-        root: document.body,
-        floatingUIOptions: { placement: "bottom-start" },
-        shouldShow: (view) => {
-          const state = get_state(view);
-          if (!state.active) return false;
-          if (state.items.length === 0) return false;
-          if (!view.editable) return false;
-          if (dropdown?.contains(document.activeElement)) return true;
-          return view.hasFocus();
-        },
-      });
+      dropdown.style.display = "none";
+      dropdown.style.position = "fixed";
+      dropdown.style.zIndex = "9999";
+      document.body.appendChild(dropdown);
 
       const on_document_mousedown = (event: MouseEvent) => {
         const target = event.target;
@@ -365,8 +372,7 @@ export function create_wiki_suggest_prose_plugin(
           const el = dropdown;
           dropdown = null;
           el?.remove();
-          provider?.destroy();
-          provider = null;
+          is_visible = false;
           if (debounce_timer) clearTimeout(debounce_timer);
           debounce_timer = null;
           detach_outside_click?.();
@@ -436,12 +442,12 @@ export function create_wiki_suggest_prose_plugin(
 
 export function set_wiki_suggestions(
   view: EditorView,
-  items: SuggestionItem[],
+  items: Array<{
+    title: string;
+    path: string;
+    kind: "existing" | "planned";
+    ref_count?: number | undefined;
+  }>,
 ) {
   view.dispatch(view.state.tr.setMeta(wiki_suggest_plugin_key, { items }));
 }
-
-export const wiki_suggest_plugin = $prose((ctx) => {
-  const config = ctx.get(wiki_suggest_plugin_config_key.key);
-  return create_wiki_suggest_prose_plugin(config);
-});

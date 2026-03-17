@@ -1,12 +1,11 @@
-import { $prose } from "@milkdown/kit/utils";
 import {
   Plugin,
   PluginKey,
   TextSelection,
   type EditorState,
-} from "@milkdown/kit/prose/state";
-import { SlashProvider } from "@milkdown/kit/plugin/slash";
-import type { EditorView } from "@milkdown/kit/prose/view";
+} from "prosemirror-state";
+import { computePosition, flip, shift, offset } from "@floating-ui/dom";
+import type { EditorView } from "prosemirror-view";
 
 export const slash_plugin_key = new PluginKey("slash-command");
 
@@ -476,12 +475,21 @@ function scroll_selected_into_view(
   }
 }
 
-export const slash_command_plugin = $prose(() => {
+function position_menu(menu: HTMLElement, anchor_el: Element) {
+  void computePosition(anchor_el, menu, {
+    placement: "bottom-start",
+    middleware: [offset(6), flip(), shift({ padding: 8 })],
+  }).then(({ x, y }) => {
+    menu.style.left = `${String(x)}px`;
+    menu.style.top = `${String(y)}px`;
+  });
+}
+
+export function create_slash_command_prose_plugin(): Plugin {
   const all_commands = create_commands();
 
   let slash_state: SlashState = EMPTY_STATE;
   let menu: HTMLElement | null = null;
-  let provider: SlashProvider | null = null;
   let accept_fn: ((cmd: SlashCommand) => void) | null = null;
   let detach_outside_click: (() => void) | null = null;
   let detach_focus_listener: (() => void) | null = null;
@@ -491,26 +499,15 @@ export const slash_command_plugin = $prose(() => {
 
     view(editor_view) {
       menu = create_menu_el();
-
-      provider = new SlashProvider({
-        content: menu,
-        debounce: 0,
-        offset: { mainAxis: 6 },
-        root: document.body,
-        floatingUIOptions: { placement: "bottom-start" },
-        shouldShow: () => {
-          if (!slash_state.active) return false;
-          if (slash_state.filtered.length === 0) return false;
-          if (!editor_view.editable) return false;
-          if (menu?.contains(document.activeElement)) return true;
-          return editor_view.hasFocus();
-        },
-      });
+      menu.style.display = "none";
+      menu.style.position = "fixed";
+      menu.style.zIndex = "9999";
+      document.body.appendChild(menu);
 
       accept_fn = (cmd) => {
         const from = slash_state.from;
         slash_state = EMPTY_STATE;
-        provider?.hide();
+        if (menu) menu.style.display = "none";
         cmd.insert(editor_view, from);
         editor_view.focus();
       };
@@ -521,7 +518,7 @@ export const slash_command_plugin = $prose(() => {
         if (menu?.contains(target)) return;
         if (editor_view.dom.contains(target)) return;
         slash_state = EMPTY_STATE;
-        provider?.hide();
+        if (menu) menu.style.display = "none";
       };
 
       const on_document_focusin = (event: FocusEvent) => {
@@ -530,7 +527,7 @@ export const slash_command_plugin = $prose(() => {
         if (menu?.contains(target)) return;
         if (editor_view.dom.contains(target)) return;
         slash_state = EMPTY_STATE;
-        provider?.hide();
+        if (menu) menu.style.display = "none";
       };
 
       document.addEventListener("mousedown", on_document_mousedown, true);
@@ -550,7 +547,7 @@ export const slash_command_plugin = $prose(() => {
           if (!result) {
             if (slash_state.active) {
               slash_state = EMPTY_STATE;
-              provider?.hide();
+              if (menu) menu.style.display = "none";
             }
             return;
           }
@@ -575,14 +572,29 @@ export const slash_command_plugin = $prose(() => {
           };
 
           if (menu) render_items(menu, slash_state, (cmd) => accept_fn?.(cmd));
-          provider?.update(view, undefined);
+
+          if (menu && filtered.length > 0) {
+            const { $from } = view.state.selection;
+            const coords = view.coordsAtPos($from.pos);
+            const anchor_el = {
+              getBoundingClientRect: () =>
+                new DOMRect(
+                  coords.left,
+                  coords.top,
+                  0,
+                  coords.bottom - coords.top,
+                ),
+            } as Element;
+            menu.style.display = "block";
+            position_menu(menu, anchor_el);
+          } else if (menu) {
+            menu.style.display = "none";
+          }
         },
 
         destroy() {
           menu?.remove();
           menu = null;
-          provider?.destroy();
-          provider = null;
           accept_fn = null;
           detach_outside_click?.();
           detach_outside_click = null;
@@ -633,7 +645,7 @@ export const slash_command_plugin = $prose(() => {
         if (event.key === "Escape") {
           event.preventDefault();
           slash_state = EMPTY_STATE;
-          provider?.hide();
+          if (menu) menu.style.display = "none";
           return true;
         }
 
@@ -641,4 +653,4 @@ export const slash_command_plugin = $prose(() => {
       },
     },
   });
-});
+}

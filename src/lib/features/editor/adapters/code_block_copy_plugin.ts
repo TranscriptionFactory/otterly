@@ -1,5 +1,4 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { Check, Copy } from "lucide-static";
 
 function resize_icon(svg: string, size: number): string {
@@ -45,43 +44,42 @@ function create_copy_button(code_el: HTMLElement): HTMLButtonElement {
   return button;
 }
 
-export const code_block_copy_plugin = $prose(
-  () =>
-    new Plugin({
-      key: code_block_copy_key,
-      props: {
-        nodeViews: {
-          code_block: (node) => {
-            const wrapper = document.createElement("div");
-            wrapper.className = "code-block-wrapper";
+export function create_code_block_copy_prose_plugin(): Plugin {
+  return new Plugin({
+    key: code_block_copy_key,
+    props: {
+      nodeViews: {
+        code_block: (node) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "code-block-wrapper";
 
-            const pre = document.createElement("pre");
-            const code = document.createElement("code");
+          const pre = document.createElement("pre");
+          const code = document.createElement("code");
 
-            if (node.attrs.language) {
-              code.classList.add(`language-${String(node.attrs.language)}`);
-            }
+          if (node.attrs.language) {
+            code.classList.add(`language-${String(node.attrs.language)}`);
+          }
 
-            pre.appendChild(code);
-            wrapper.appendChild(pre);
-            wrapper.appendChild(create_copy_button(code));
+          pre.appendChild(code);
+          wrapper.appendChild(pre);
+          wrapper.appendChild(create_copy_button(code));
 
-            return {
-              dom: wrapper,
-              contentDOM: code,
-              update: (updated) => {
-                if (updated.type.name !== "code_block") return false;
-                code.className = updated.attrs.language
-                  ? `language-${String(updated.attrs.language)}`
-                  : "";
-                return true;
-              },
-              stopEvent: (event) =>
-                event.target instanceof HTMLElement &&
-                event.target.closest(".code-block-copy") !== null,
-            };
-          },
+          return {
+            dom: wrapper,
+            contentDOM: code,
+            update: (updated) => {
+              if (updated.type.name !== "code_block") return false;
+              code.className = updated.attrs.language
+                ? `language-${String(updated.attrs.language)}`
+                : "";
+              return true;
+            },
+            stopEvent: (event) =>
+              event.target instanceof HTMLElement &&
+              event.target.closest(".code-block-copy") !== null,
+          };
         },
       },
-    }),
-);
+    },
+  });
+}

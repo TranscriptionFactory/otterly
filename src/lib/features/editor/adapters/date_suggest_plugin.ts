@@ -1,8 +1,7 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import type { EditorState } from "@milkdown/kit/prose/state";
-import type { EditorView } from "@milkdown/kit/prose/view";
-import { SlashProvider } from "@milkdown/kit/plugin/slash";
+import { Plugin, PluginKey } from "prosemirror-state";
+import type { EditorState } from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
+import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 
 export type DatePresetItem = {
   label: string;
@@ -175,10 +174,45 @@ function update_selected_class(
     children[next].classList.add("DateSuggestMenu__item--selected");
 }
 
-export const date_suggest_plugin = $prose(() => {
+function create_virtual_element(view: EditorView): {
+  getBoundingClientRect(): DOMRect;
+} {
+  return {
+    getBoundingClientRect() {
+      const { from } = view.state.selection;
+      const coords = view.coordsAtPos(from);
+      return new DOMRect(
+        coords.left,
+        coords.top,
+        0,
+        coords.bottom - coords.top,
+      );
+    },
+  };
+}
+
+function show_menu(menu: HTMLElement, view: EditorView): void {
+  if (!menu.parentElement) document.body.appendChild(menu);
+  menu.style.display = "";
+  menu.style.position = "fixed";
+  menu.style.zIndex = "100";
+  const virtual = create_virtual_element(view);
+  void computePosition(virtual as unknown as Element, menu, {
+    placement: "bottom-start",
+    middleware: [offset(6), flip(), shift()],
+  }).then(({ x, y }) => {
+    menu.style.left = `${String(x)}px`;
+    menu.style.top = `${String(y)}px`;
+  });
+}
+
+function hide_menu(menu: HTMLElement): void {
+  menu.style.display = "none";
+}
+
+export function create_date_suggest_prose_plugin(): Plugin {
   let suggest_state: DateSuggestState = EMPTY_STATE;
   let menu: HTMLElement | null = null;
-  let provider: SlashProvider | null = null;
   let accept_fn: ((item: DatePresetItem) => void) | null = null;
   let detach_outside_click: (() => void) | null = null;
   let detach_focus_listener: (() => void) | null = null;
@@ -190,26 +224,12 @@ export const date_suggest_plugin = $prose(() => {
 
     view(editor_view) {
       menu = create_menu_el();
-
-      provider = new SlashProvider({
-        content: menu,
-        debounce: 0,
-        offset: { mainAxis: 6 },
-        root: document.body,
-        floatingUIOptions: { placement: "bottom-start" },
-        shouldShow: () => {
-          if (!suggest_state.active) return false;
-          if (suggest_state.items.length === 0) return false;
-          if (!editor_view.editable) return false;
-          if (menu?.contains(document.activeElement)) return true;
-          return editor_view.hasFocus();
-        },
-      });
+      hide_menu(menu);
 
       accept_fn = (item) => {
         const from = suggest_state.from;
         suggest_state = EMPTY_STATE;
-        provider?.hide();
+        if (menu) hide_menu(menu);
         insert_date_link(editor_view, from, item.date_str);
         editor_view.focus();
       };
@@ -220,7 +240,7 @@ export const date_suggest_plugin = $prose(() => {
         if (menu?.contains(target)) return;
         if (editor_view.dom.contains(target)) return;
         suggest_state = EMPTY_STATE;
-        provider?.hide();
+        if (menu) hide_menu(menu);
       };
 
       const on_document_focusin = (event: FocusEvent) => {
@@ -229,7 +249,7 @@ export const date_suggest_plugin = $prose(() => {
         if (menu?.contains(target)) return;
         if (editor_view.dom.contains(target)) return;
         suggest_state = EMPTY_STATE;
-        provider?.hide();
+        if (menu) hide_menu(menu);
       };
 
       document.addEventListener("mousedown", on_document_mousedown, true);
@@ -249,7 +269,7 @@ export const date_suggest_plugin = $prose(() => {
           if (!result) {
             if (suggest_state.active) {
               suggest_state = EMPTY_STATE;
-              provider?.hide();
+              if (menu) hide_menu(menu);
             }
             return;
           }
@@ -276,16 +296,19 @@ export const date_suggest_plugin = $prose(() => {
             items: filtered,
           };
 
-          if (menu)
+          if (menu) {
             render_items(menu, suggest_state, (item) => accept_fn?.(item));
-          provider?.update(view, undefined);
+            if (filtered.length > 0 && view.hasFocus()) {
+              show_menu(menu, view);
+            } else {
+              hide_menu(menu);
+            }
+          }
         },
 
         destroy() {
           menu?.remove();
           menu = null;
-          provider?.destroy();
-          provider = null;
           accept_fn = null;
           detach_outside_click?.();
           detach_outside_click = null;
@@ -336,7 +359,7 @@ export const date_suggest_plugin = $prose(() => {
         if (event.key === "Escape") {
           event.preventDefault();
           suggest_state = EMPTY_STATE;
-          provider?.hide();
+          hide_menu(menu);
           return true;
         }
 
@@ -344,4 +367,4 @@ export const date_suggest_plugin = $prose(() => {
       },
     },
   });
-});
+}

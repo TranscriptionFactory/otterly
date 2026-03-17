@@ -1,18 +1,17 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey, TextSelection } from "@milkdown/kit/prose/state";
-import type { EditorState, Transaction } from "@milkdown/kit/prose/state";
-import { imageBlockSchema } from "@milkdown/kit/component/image-block";
-import type { Node as ProseNode, NodeType } from "@milkdown/kit/prose/model";
+import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
+import type { EditorState, Transaction } from "prosemirror-state";
+import type { Node as ProseNode, NodeType } from "prosemirror-model";
 
 const IMAGE_MARKDOWN_REGEX = /!\[([^\]]*)\]\(([^)\s]+)\)/;
 
-export const image_input_rule_plugin = $prose((ctx) => {
-  const image_block_type = imageBlockSchema.node.type(ctx);
-
+export function create_image_input_rule_prose_plugin(): Plugin {
   return new Plugin({
     key: new PluginKey("image-block-converter"),
     appendTransaction(transactions, _oldState, newState) {
       if (!transactions.some((tr) => tr.docChanged)) return null;
+
+      const image_block_type = newState.schema.nodes["image-block"];
+      if (!image_block_type) return null;
 
       const { $from } = newState.selection;
       const parent = $from.parent;
@@ -45,7 +44,7 @@ export const image_input_rule_plugin = $prose((ctx) => {
       return null;
     },
   });
-});
+}
 
 function find_solo_inline_image(parent: ProseNode): ProseNode | null {
   if (parent.childCount !== 1) return null;

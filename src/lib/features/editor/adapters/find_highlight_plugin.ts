@@ -1,7 +1,6 @@
-import { $prose } from "@milkdown/kit/utils";
-import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
-import { Decoration, DecorationSet } from "@milkdown/kit/prose/view";
-import type { Node as ProseNode } from "@milkdown/kit/prose/model";
+import { Plugin, PluginKey } from "prosemirror-state";
+import { Decoration, DecorationSet } from "prosemirror-view";
+import type { Node as ProseNode } from "prosemirror-model";
 
 type FindHighlightMeta = {
   query: string;
@@ -68,7 +67,7 @@ export const find_highlight_plugin_key = new PluginKey<FindHighlightState>(
   "find-highlight",
 );
 
-export function create_find_highlight_prose_plugin() {
+export function create_find_highlight_prose_plugin(): Plugin<FindHighlightState> {
   return new Plugin<FindHighlightState>({
     key: find_highlight_plugin_key,
     state: {
@@ -131,7 +130,3 @@ export function create_find_highlight_prose_plugin() {
     },
   });
 }
-
-export const find_highlight_plugin = $prose(() =>
-  create_find_highlight_prose_plugin(),
-);

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
-import { EditorState, TextSelection } from "@milkdown/kit/prose/state";
+import { Schema } from "prosemirror-model";
+import { EditorState, TextSelection } from "prosemirror-state";
 import { create_commands } from "$lib/features/editor/adapters/slash_command_plugin";
 
 function create_schema() {
@@ -51,14 +51,13 @@ describe("slash task-list insertion", () => {
       ),
     );
 
-    const dispatched: Array<import("@milkdown/kit/prose/state").Transaction> =
-      [];
+    const dispatched: Array<import("prosemirror-state").Transaction> = [];
     const view = {
       state,
-      dispatch: (tr: import("@milkdown/kit/prose/state").Transaction) =>
+      dispatch: (tr: import("prosemirror-state").Transaction) =>
         dispatched.push(tr),
       focus: vi.fn(),
-    } as unknown as import("@milkdown/kit/prose/view").EditorView;
+    } as unknown as import("prosemirror-view").EditorView;
 
     find_command("todo").insert(view, 1);
 

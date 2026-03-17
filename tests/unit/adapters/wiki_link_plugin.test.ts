@@ -1,23 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { Schema } from "@milkdown/kit/prose/model";
+import { Schema } from "prosemirror-model";
 import {
   EditorState,
   Plugin,
   PluginKey,
   TextSelection,
-} from "@milkdown/kit/prose/state";
+} from "prosemirror-state";
 import {
   create_wiki_link_converter_prose_plugin,
   wiki_link_plugin_key,
 } from "$lib/features/editor/adapters/wiki_link_plugin";
 import { dirty_state_plugin_key } from "$lib/features/editor/adapters/dirty_state_plugin";
 import { create_paired_delimiter_prose_plugin } from "$lib/features/editor/adapters/paired_delimiter_plugin";
-import type {
-  MarkType,
-  Node as ProseNode,
-  Mark,
-} from "@milkdown/kit/prose/model";
-import type { EditorView } from "@milkdown/kit/prose/view";
+import type { MarkType, Node as ProseNode, Mark } from "prosemirror-model";
+import type { EditorView } from "prosemirror-view";
 
 function create_schema() {
   const link = {
