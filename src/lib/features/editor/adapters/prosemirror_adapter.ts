@@ -72,7 +72,6 @@ import {
   create_math_inline_input_prose_plugin,
   create_math_block_input_rule_prose_plugin,
 } from "./math_plugin";
-import { create_code_block_copy_prose_plugin } from "./code_block_copy_plugin";
 import type { BufferConfig, EditorPort } from "$lib/features/editor/ports";
 import type { AssetPath, VaultId } from "$lib/shared/types/ids";
 import { as_asset_path } from "$lib/shared/types/ids";
@@ -422,7 +421,6 @@ export function create_prosemirror_editor_port(args?: {
       plugins.push(create_math_view_prose_plugin());
       plugins.push(create_math_inline_input_prose_plugin());
       plugins.push(create_math_block_input_rule_prose_plugin(schema));
-      plugins.push(create_code_block_copy_prose_plugin());
       plugins.push(create_code_block_view_prose_plugin());
       plugins.push(create_table_toolbar_prose_plugin());
       plugins.push(create_image_toolbar_prose_plugin());
