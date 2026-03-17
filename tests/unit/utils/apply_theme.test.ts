@@ -3,6 +3,7 @@ import { apply_theme } from "$lib/shared/utils/apply_theme";
 import {
   BUILTIN_NORDIC_DARK,
   BUILTIN_NORDIC_LIGHT,
+  BUILTIN_THEMES,
 } from "$lib/shared/types/theme";
 
 describe("apply_theme", () => {
@@ -134,4 +135,13 @@ describe("apply_theme", () => {
     apply_theme(BUILTIN_NORDIC_DARK, { persist_to_cache: false });
     expect(set_item).not.toHaveBeenCalled();
   });
+
+  it.each(BUILTIN_THEMES.map((t) => [t.id, t]))(
+    "applies builtin theme %s without error",
+    (_id, theme) => {
+      expect(() => apply_theme(theme)).not.toThrow();
+      expect(attributes.get("data-color-scheme")).toBe(theme.color_scheme);
+      expect(store.size).toBeGreaterThan(0);
+    },
+  );
 });
