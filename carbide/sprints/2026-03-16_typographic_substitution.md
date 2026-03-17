@@ -6,6 +6,7 @@
 ## Problem
 
 Users want common character sequences to auto-convert to their typographic equivalents while typing:
+
 - `-->` → `→`, `<--` → `←`, `<->` → `↔`
 - `==>` → `⇒`, `<==` → `⇐`, `<=>` → `⇔`
 
@@ -14,6 +15,7 @@ Users want common character sequences to auto-convert to their typographic equiv
 ### Pattern: `handleTextInput` (not `InputRule`)
 
 Used the same `handleTextInput` prop pattern as `emoji_plugin.ts` rather than ProseMirror `InputRule`. Reasons:
+
 1. Character-by-character interception avoids regex compilation overhead
 2. Natural code block / math block exclusion via parent node type check
 3. Consistent with existing codebase conventions
@@ -29,13 +31,16 @@ These conflict with double-arrow patterns (`<==`, `<=>`) and are extremely commo
 ## Implementation
 
 ### New files
+
 - `src/lib/features/editor/adapters/typography_plugin.ts` — Plugin + pure matching function
 - `tests/unit/adapters/typography_plugin.test.ts` — 16 test cases
 
 ### Modified files
+
 - `src/lib/features/editor/adapters/milkdown_adapter.ts` — Import + `.use(typography_plugin)` registration
 
 ### Architecture
+
 - `find_typography_match(text_before, typed_char)` — Pure function, exported for testability
 - `typography_plugin` — `$prose()` wrapped ProseMirror plugin with `handleTextInput`
 - Rules defined as a static `TYPOGRAPHY_RULES` array for easy extension
@@ -44,6 +49,7 @@ These conflict with double-arrow patterns (`<==`, `<=>`) and are extremely commo
 ## Testing
 
 16 test cases covering:
+
 - All 8 substitution patterns
 - Start-of-text edge cases
 - No-match scenarios (unrecognized patterns, partial patterns)
