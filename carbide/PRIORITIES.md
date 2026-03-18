@@ -264,7 +264,44 @@ This is lower priority than 17.1 and 17.4 but should be in place before a third 
 4. ~~**Milkdown vs raw PM decision**~~ — ✅ Done. Pure ProseMirror. Milkdown fully ejected.
 5. **ViewTypeRegistry** — ❌ Still needed before a third Bases view mode.
 
-# 3. Graph & Semantic Search — Current State and Next Steps
+# 3. Carbide Plugin System Design
+
+## Plugin System Strategy
+
+Build a native Carbide plugin API first. Design it with Obsidian-like vocabulary (same concepts, similar method names) so porting is trivial, but don't build a compatibility shim until the app has real users.
+
+### Non-Goals
+
+- Do not promise "runs Obsidian plugins" as a blanket capability
+- Do not expose raw Tauri IPC to plugin code
+- Do not expose PTY stdin or shell execution to plugins
+- Do not try to emulate all of Obsidian's desktop runtime on day 1
+
+The right framing is: Carbide has its own plugin host, and later may add an Obsidian compatibility layer for a subset of plugins.
+
+## Current implementation status
+
+Phase 1 of the native plugin API is partially complete. The following are landed and working:
+
+- iframe sandbox with `postMessage` RPC bridge
+- permission-checked RPC dispatcher (4 namespaces: vault, editor, commands, ui)
+- 3 contribution registries: commands, status bar items, sidebar panels
+- plugin discovery from `<vault>/.carbide/plugins/`
+- manifest parsing and enable/disable state
+- per-plugin error tracking with auto-disable on repeated failures
+- 2 demo plugins: Hello World (command registration) and Word Count (status bar polling)
+- plugin manager UI in sidebar
+- custom URI scheme (`badgerly-plugin://`) for serving plugin HTML
+
+Not yet implemented:
+
+- proper load/unload lifecycle in `PluginHostAdapter` (currently stubs)
+- TypeScript SDK (`@carbide/plugin-api`)
+- hot-reload in dev mode
+- LaTeX Snippets demo plugin
+- 3 of 6 planned contribution points (note context actions, editor content transforms, metadata providers) — these depend on features that don't yet exist
+
+# 4. Graph & Semantic Search — Current State and Next Steps
 
 > Findings from audit of `src/lib/features/graph/`, `src/lib/features/links/`, `src-tauri/src/features/graph/`, and `~/src/RAG/`.
 
