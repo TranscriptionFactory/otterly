@@ -6,6 +6,7 @@ import {
 } from "prosemirror-state";
 import { computePosition, flip, shift, offset } from "@floating-ui/dom";
 import type { EditorView } from "prosemirror-view";
+import { fuzzy_score_multi } from "$lib/shared/utils/fuzzy_score";
 
 export const slash_plugin_key = new PluginKey("slash-command");
 
@@ -73,13 +74,16 @@ export function filter_commands(
 ): SlashCommand[] {
   const normalized_query = query.trim();
   if (!normalized_query) return all;
-  const q = normalized_query.toLowerCase();
-  return all.filter(
-    (cmd) =>
-      cmd.id.startsWith(q) ||
-      cmd.label.toLowerCase().includes(q) ||
-      cmd.keywords.some((k) => k.includes(q)),
-  );
+  return all
+    .map((cmd) => ({
+      cmd,
+      score:
+        fuzzy_score_multi(normalized_query, cmd.id, cmd.label, ...cmd.keywords)
+          ?.score ?? 0,
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((entry) => entry.cmd);
 }
 
 function make_heading_insert(level: number) {

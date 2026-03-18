@@ -26,6 +26,7 @@ import { COMMANDS_REGISTRY } from "$lib/features/search/domain/search_commands";
 import { SETTINGS_REGISTRY } from "$lib/features/settings";
 import { error_message } from "$lib/shared/utils/error_message";
 import { create_logger } from "$lib/shared/utils/logger";
+import { fuzzy_score_multi } from "$lib/shared/utils/fuzzy_score";
 import type { Vault } from "$lib/shared/types/vault";
 import type { VaultId } from "$lib/shared/types/ids";
 import { note_name_from_path } from "$lib/shared/utils/path";
@@ -77,22 +78,24 @@ type CrossVaultAggregation = {
 };
 
 function score_command(query: string, command: CommandDefinition): number {
-  const label = command.label.toLowerCase();
-  if (label.startsWith(query)) return 100;
-  if (label.includes(query)) return 80;
-  if (command.keywords.some((k) => k.toLowerCase().includes(query))) return 60;
-  if (command.description.toLowerCase().includes(query)) return 40;
-  return 0;
+  const result = fuzzy_score_multi(
+    query,
+    command.label,
+    ...command.keywords,
+    command.description,
+  );
+  return result?.score ?? 0;
 }
 
 function score_setting(query: string, setting: SettingDefinition): number {
-  const label = setting.label.toLowerCase();
-  if (label.startsWith(query)) return 100;
-  if (label.includes(query)) return 80;
-  if (setting.keywords.some((k) => k.toLowerCase().includes(query))) return 60;
-  if (setting.description.toLowerCase().includes(query)) return 40;
-  if (setting.category.toLowerCase().includes(query)) return 20;
-  return 0;
+  const result = fuzzy_score_multi(
+    query,
+    setting.label,
+    ...setting.keywords,
+    setting.description,
+    setting.category,
+  );
+  return result?.score ?? 0;
 }
 
 function merge_wiki_suggestions(input: {
