@@ -27,13 +27,6 @@ export function fuzzy_score(query: string, target: string): FuzzyResult | null {
   const q = query.toLowerCase();
   const t = target.toLowerCase();
 
-  // quick check: all query chars exist in target in order
-  let check = 0;
-  for (let i = 0; i < t.length && check < q.length; i++) {
-    if (t[i] === q[check]) check++;
-  }
-  if (check !== q.length) return null;
-
   let score = 0;
   const indices: number[] = [];
   let qi = 0;
@@ -50,10 +43,7 @@ export function fuzzy_score(query: string, target: string): FuzzyResult | null {
 
       if (ti === 0) {
         score += SCORE_START;
-      } else if (
-        ti > 0 &&
-        is_boundary(target[ti - 1] ?? "", target[ti] ?? "")
-      ) {
+      } else if (is_boundary(target[ti - 1] ?? "", target[ti] ?? "")) {
         score += SCORE_BOUNDARY;
       }
 
@@ -74,7 +64,7 @@ export function fuzzy_score(query: string, target: string): FuzzyResult | null {
 
 export function fuzzy_score_multi(
   query: string,
-  ...targets: string[]
+  targets: string[],
 ): FuzzyResult | null {
   let best: FuzzyResult | null = null;
   for (const target of targets) {
@@ -84,4 +74,8 @@ export function fuzzy_score_multi(
     }
   }
   return best;
+}
+
+export function fuzzy_score_fields(query: string, fields: string[]): number {
+  return fuzzy_score_multi(query, fields)?.score ?? 0;
 }

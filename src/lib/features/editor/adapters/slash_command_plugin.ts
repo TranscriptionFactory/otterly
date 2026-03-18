@@ -6,7 +6,7 @@ import {
 } from "prosemirror-state";
 import { computePosition, flip, shift, offset } from "@floating-ui/dom";
 import type { EditorView } from "prosemirror-view";
-import { fuzzy_score_multi } from "$lib/shared/utils/fuzzy_score";
+import { fuzzy_score_fields } from "$lib/shared/utils/fuzzy_score";
 
 export const slash_plugin_key = new PluginKey("slash-command");
 
@@ -77,9 +77,11 @@ export function filter_commands(
   return all
     .map((cmd) => ({
       cmd,
-      score:
-        fuzzy_score_multi(normalized_query, cmd.id, cmd.label, ...cmd.keywords)
-          ?.score ?? 0,
+      score: fuzzy_score_fields(normalized_query, [
+        cmd.id,
+        cmd.label,
+        ...cmd.keywords,
+      ]),
     }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score)

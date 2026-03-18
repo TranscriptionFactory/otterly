@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { fuzzy_score, fuzzy_score_multi } from "$lib/shared/utils/fuzzy_score";
+import {
+  fuzzy_score,
+  fuzzy_score_multi,
+  fuzzy_score_fields,
+} from "$lib/shared/utils/fuzzy_score";
 
 describe("fuzzy_score", () => {
   it("returns null for empty query", () => {
@@ -77,19 +81,30 @@ describe("fuzzy_score", () => {
 
 describe("fuzzy_score_multi", () => {
   it("returns null when no target matches", () => {
-    expect(fuzzy_score_multi("xyz", "abc", "def")).toBeNull();
+    expect(fuzzy_score_multi("xyz", ["abc", "def"])).toBeNull();
   });
 
   it("returns the best score across targets", () => {
-    const result = fuzzy_score_multi("zen", "Toggle Zen Mode", "zenith");
+    const result = fuzzy_score_multi("zen", ["Toggle Zen Mode", "zenith"]);
     expect(result).not.toBeNull();
     const direct = fuzzy_score("zen", "zenith");
     expect(result?.score).toBe(direct?.score);
   });
 
   it("works with single target", () => {
-    const multi = fuzzy_score_multi("tbl", "Table");
+    const multi = fuzzy_score_multi("tbl", ["Table"]);
     const single = fuzzy_score("tbl", "Table");
     expect(multi).toEqual(single);
+  });
+});
+
+describe("fuzzy_score_fields", () => {
+  it("returns 0 when no field matches", () => {
+    expect(fuzzy_score_fields("xyz", ["abc", "def"])).toBe(0);
+  });
+
+  it("returns best score as a number", () => {
+    const score = fuzzy_score_fields("zen", ["Toggle Zen Mode", "zenith"]);
+    expect(score).toBeGreaterThan(0);
   });
 });

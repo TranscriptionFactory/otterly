@@ -26,7 +26,7 @@ import { COMMANDS_REGISTRY } from "$lib/features/search/domain/search_commands";
 import { SETTINGS_REGISTRY } from "$lib/features/settings";
 import { error_message } from "$lib/shared/utils/error_message";
 import { create_logger } from "$lib/shared/utils/logger";
-import { fuzzy_score_multi } from "$lib/shared/utils/fuzzy_score";
+import { fuzzy_score_fields } from "$lib/shared/utils/fuzzy_score";
 import type { Vault } from "$lib/shared/types/vault";
 import type { VaultId } from "$lib/shared/types/ids";
 import { note_name_from_path } from "$lib/shared/utils/path";
@@ -78,24 +78,20 @@ type CrossVaultAggregation = {
 };
 
 function score_command(query: string, command: CommandDefinition): number {
-  const result = fuzzy_score_multi(
-    query,
+  return fuzzy_score_fields(query, [
     command.label,
     ...command.keywords,
     command.description,
-  );
-  return result?.score ?? 0;
+  ]);
 }
 
 function score_setting(query: string, setting: SettingDefinition): number {
-  const result = fuzzy_score_multi(
-    query,
+  return fuzzy_score_fields(query, [
     setting.label,
     ...setting.keywords,
     setting.description,
     setting.category,
-  );
-  return result?.score ?? 0;
+  ]);
 }
 
 function merge_wiki_suggestions(input: {
