@@ -52,7 +52,7 @@ export const DEFAULT_HOTKEYS: HotkeyBinding[] = [
   },
   {
     action_id: ACTION_IDS.ui_toggle_zen_mode,
-    key: "CmdOrCtrl+Shift+Z",
+    key: "CmdOrCtrl+Shift+Enter",
     phase: "capture",
     label: "Toggle Zen Mode",
     description: "Hide all panels and enter distraction-free writing mode",
