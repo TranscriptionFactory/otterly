@@ -3,6 +3,7 @@
   import "../app.css";
   import "../styles/design_tokens.css";
   import "../styles/component_overrides.css";
+  import "prosemirror-view/style/prosemirror.css";
   import "../styles/editor.css";
   import "katex/dist/katex.min.css";
   import { Toaster } from "$lib/components/ui/sonner";
